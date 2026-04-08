@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Criador de Prompts — IA PROJECT</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /*
+    ╔══════════════════════════════════════════════════════════════╗
+    ║  IA PROJECT — PROMPT BUILDER MODULE                         ║
+    ║  Drop-in replacement for #ia-tab-prompt                     ║
+    ║  Reuses system :root CSS variables                          ║
+    ╚══════════════════════════════════════════════════════════════╝
+    */
+
+    /* ── Fallback :root (active only when loaded standalone) ── */
+    :root {
+      --primary:        #00d9ff;
+      --primary-dark:   #0099cc;
+      --secondary:      #9d4edd;
+      --secondary-dark: #7b2cbf;
+      --dark:           #0a0a0f;
+      --dark-light:     #12121a;
+      --darker:         #050509;
+      --light:          #f0f0f5;
+      --gray:           #8888a0;
+      --success:        #00cc88;
+      --warning:        #ffaa00;
+      --danger:         #ff3366;
+      --glass:          rgba(20, 20, 30, 0.7);
+      --glass-light:    rgba(30, 30, 45, 0.8);
+      --border:         rgba(100, 100, 150, 0.2);
+      --shadow:         0 8px 32px rgba(0, 0, 0, 0.3);
+
+      /* Module-specific */
+      --pb-accent:      #a855f7;
+      --pb-accent-dim:  #7c3aed;
+      --pb-accent-glow: rgba(168, 85, 247, 0.25);
+      --pb-step-done:   #00cc88;
+      --pb-step-active: #a855f7;
+    }
+
+    /* ── Standalone body (stripped when embedded) ── */
+    body {
+      background: linear-gradient(135deg, var(--darker), var(--dark));
+      color: var(--light);
+      min-height: 100vh;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    /* ══════════════════════════════════════════════
+       PB ROOT CONTAINER
+    ══════════════════════════════════════════════ */
+    #pb-root {
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    .pb-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+    .pb-header-left h2 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--pb-accent);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+      letter-spacing: -0.3px;
+    }
+    .pb-header-left p {
+      color: var(--gray);
+      font-size: 13px;
+    }
+    .pb-header-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Step Indicator (Wizard) ── */
+    .pb-stepper {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 28px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .pb-stepper::-webkit-scrollbar { display: none; }
+
+    .pb-step-item {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex-shrink: 0;
+    }
+    .pb-step-circle {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gray);
+      background: rgba(15, 12, 30, 0.8);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      z-index: 1;
+    }
+    .pb-step-label {
+      font-size: 11px;
+      color: var(--gray);
+      white-space: nowrap;
+      margin: 0 8px;
+      font-weight: 600;
+      transition: color 0.3s;
+    }
+    .pb-step-line {
+      width: 36px;
+      height: 2px;
+      background: rgba(148, 163, 184, 0.15);
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+
+    /* States */
+    .pb-step-item[data-state="done"] .pb-step-circle {
+      border-color: var(--pb-step-done);
+      background: rgba(0, 204, 136, 0.15);
+      color: var(--pb-step-done);
+    }
+    .pb-step-item[data-state="done"] .pb-step-label { color: var(--pb-step-done); }
+    .pb-step-item[data-state="done"] + .pb-step-line { background: var(--pb-step-done); }
+
+    .pb-step-item[data-state="active"] .pb-step-circle {
+      border-color: var(--pb-accent);
+      background: var(--pb-accent-glow);
+      color: var(--pb-accent);
+      box-shadow: 0 0 12px rgba(168,85,247,0.4);
+    }
+    .pb-step-item[data-state="active"] .pb-step-label { color: var(--pb-accent); }
+
+    /* ── Steps Panel ── */
+    .pb-step-panel {
+      display: none;
+      animation: pb-fadein 0.3s ease;
+    }
+    .pb-step-panel.active { display: block; }
+
+    @keyframes pb-fadein {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Glass Card ── */
+    .pb-card {
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+    .pb-card.accent-border {
+      border-color: rgba(168, 85, 247, 0.35);
+    }
+
+    /* ── Section Title inside card ── */
+    .pb-section-title {
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--pb-accent);
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pb-section-desc {
+      color: var(--gray);
+      font-size: 13px;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    /* ── Multi-Select Chips ── */
+    .pb-field { margin-bottom: 22px; }
+
+    .pb-field-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      gap: 8px;
+    }
+    .pb-field-label {
+      font-size: 12px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #a78bfa;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pb-field-label .req { color: var(--danger); }
+    .pb-field-label .opt {
+      font-size: 10px;
+      color: var(--gray);
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 400;
+    }
+    .pb-field-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pb-counter {
+      font-size: 11px;
+      font-weight: 700;
+      color: #94a3b8;
+      background: rgba(124, 58, 237, 0.15);
+      padding: 2px 9px;
+      border-radius: 20px;
+      border: 1px solid rgba(124, 58, 237, 0.3);
+      transition: all 0.2s;
+    }
+    .pb-counter.has-sel {
+      color: var(--pb-accent);
+      background: rgba(168, 85, 247, 0.25);
+      border-color: var(--pb-accent);
+    }
+    .pb-tooltip-btn {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(148,163,184,0.12);
+      border: 1px solid rgba(148,163,184,0.25);
+      color: var(--gray);
+      font-size: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .pb-tooltip-btn:hover .pb-tooltip-text { display: block; }
+    .pb-tooltip-text {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 6px);
+      right: 0;
+      background: #1e1b2e;
+      border: 1px solid rgba(168,85,247,0.3);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 11.5px;
+      color: #cbd5e1;
+      width: 220px;
+      z-index: 10;
+      line-height: 1.5;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      pointer-events: none;
+    }
+
+    .pb-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+
+    .pb-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 13px;
+      border-radius: 20px;
+      cursor: pointer;
+      border: 1.5px solid rgba(148, 163, 184, 0.4);
+      background: rgba(15, 12, 30, 0.6);
+      color: #cbd5e1;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s;
+      user-select: none;
+      line-height: 1.3;
+    }
+    .pb-chip:hover {
+      border-color: var(--pb-accent);
+      color: #e9d5ff;
+      background: rgba(124, 58, 237, 0.12);
+    }
+    .pb-chip.active {
+      border-color: var(--pb-accent);
+      background: rgba(168, 85, 247, 0.22);
+      color: #e9d5ff;
+      box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.35);
+    }
+    .pb-chip.active::before { content: '✓ '; color: var(--pb-accent); }
+    .pb-chip.blocked {
+      opacity: 0.4;
+      cursor: not-allowed;
+      border-color: rgba(148, 163, 184, 0.15);
+      color: #64748b;
+    }
+
+    .pb-chips-section {
+      font-size: 10.5px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #6d7a9a;
+      font-weight: 700;
+      margin: 14px 0 6px;
+      width: 100%;
+      padding-bottom: 4px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+    }
+
+    .pb-limit-msg {
+      font-size: 11.5px;
+      color: var(--warning);
+      margin-top: 6px;
+      display: none;
+      align-items: center;
+      gap: 5px;
+    }
+    .pb-limit-msg.show { display: flex; }
+
+    /* Custom input under chip */
+    .pb-custom-input {
+      width: 100%;
+      padding: 10px 14px;
+      margin-top: 8px;
+      background: rgba(10, 10, 15, 0.6);
+      border: 1px solid rgba(100, 100, 150, 0.2);
+      border-radius: 8px;
+      color: #f0f0f5;
+      font-size: 14px;
+      display: none;
+      transition: border-color 0.2s;
+    }
+    .pb-custom-input:focus {
+      outline: none;
+      border-color: var(--pb-accent);
+      background: rgba(15, 12, 30, 0.8);
+    }
+    .pb-custom-input.visible { display: block; }
+
+    /* ── Two-column grid ── */
+    .pb-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+    @media(max-width: 600px) { .pb-grid-2 { grid-template-columns: 1fr; } }
+
+    /* ── Buttons ── */
+    .pb-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 22px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.25s;
+      border: none;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .pb-btn:active { transform: scale(0.97); }
+
+    .pb-btn-primary {
+      background: linear-gradient(135deg, var(--pb-accent), var(--pb-accent-dim));
+      color: #fff;
+    }
+    .pb-btn-primary:hover { filter: brightness(1.1); box-shadow: 0 4px 16px rgba(168,85,247,0.4); }
+
+    .pb-btn-cyan {
+      background: linear-gradient(135deg, #06b6d4, #0891b2);
+      color: #fff;
+    }
+    .pb-btn-cyan:hover { filter: brightness(1.1); }
+
+    .pb-btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--gray);
+    }
+    .pb-btn-ghost:hover { border-color: var(--pb-accent); color: var(--pb-accent); }
+
+    .pb-btn-success {
+      background: linear-gradient(135deg, var(--success), #009966);
+      color: #fff;
+    }
+    .pb-btn-sm { padding: 8px 16px; font-size: 12px; }
+
+    /* Nav row */
+    .pb-nav-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+    .pb-nav-row-left { display: flex; gap: 8px; }
+    .pb-nav-row-right { display: flex; gap: 8px; }
+
+    /* ── Preview Box ── */
+    .pb-preview-box {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      border-radius: 12px;
+      padding: 18px;
+      font-size: 13px;
+      line-height: 1.85;
+      color: #e2e8f0;
+      white-space: pre-wrap;
+      max-height: 380px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0.1px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(168,85,247,0.4) transparent;
+    }
+    .pb-preview-box::-webkit-scrollbar { width: 5px; }
+    .pb-preview-box::-webkit-scrollbar-track { background: transparent; }
+    .pb-preview-box::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.4); border-radius: 3px; }
+
+    .pb-preview-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: #555;
+      border: 1px dashed rgba(168, 85, 247, 0.25);
+      border-radius: 10px;
+      font-size: 13px;
+    }
+    .pb-preview-empty i {
+      font-size: 28px;
+      color: #7c3aed;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    /* ── Prompt list ── */
+    .pb-prompt-item {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(168, 85, 247, 0.2);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    .pb-prompt-item-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      gap: 8px;
+    }
+    .pb-prompt-item-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--pb-accent);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .pb-prompt-item-actions { display: flex; gap: 6px; }
+    .pb-prompt-text {
+      font-size: 12px;
+      line-height: 1.75;
+      color: #cbd5e1;
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
+    }
+
+    /* ── Validation Error ── */
+    .pb-error-msg {
+      background: rgba(255, 51, 102, 0.1);
+      border: 1px solid rgba(255, 51, 102, 0.3);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12.5px;
+      color: #ff7799;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .pb-error-msg.show { display: flex; }
+
+    /* ── Success Flash ── */
+    .pb-copy-flash {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--pb-accent);
+      justify-content: center;
+      margin-top: 8px;
+    }
+    .pb-copy-flash.show { display: flex; animation: pb-fadein 0.3s ease; }
+
+    /* ── Templates ── */
+    .pb-template-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .pb-template-card {
+      background: rgba(15, 12, 30, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      border-radius: 12px;
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .pb-template-card:hover {
+      border-color: var(--pb-accent);
+      background: rgba(124, 58, 237, 0.08);
+    }
+    .pb-template-card .name {
+      font-weight: 700;
+      font-size: 13px;
+      color: #e9d5ff;
+      margin-bottom: 4px;
+    }
+    .pb-template-card .meta {
+      font-size: 11px;
+      color: var(--gray);
+    }
+    .pb-template-delete {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: transparent;
+      border: none;
+      color: rgba(255, 51, 102, 0.5);
+      cursor: pointer;
+      font-size: 11px;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: color 0.2s;
+    }
+    .pb-template-delete:hover { color: var(--danger); }
+
+    .pb-empty-state {
+      text-align: center;
+      padding: 32px;
+      color: var(--gray);
+      font-size: 13px;
+    }
+    .pb-empty-state i { font-size: 26px; display: block; margin-bottom: 10px; opacity: 0.4; }
+
+    /* ── Realtime preview strip ── */
+    .pb-live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10.5px;
+      color: var(--success);
+      background: rgba(0,204,136,0.1);
+      border: 1px solid rgba(0,204,136,0.25);
+      border-radius: 20px;
+      padding: 3px 9px;
+      font-weight: 700;
+    }
+    .pb-live-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pb-pulse 2s infinite;
+    }
+    @keyframes pb-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* ── Progress bar ── */
+    .pb-progress-bar-wrap {
+      height: 3px;
+      background: rgba(148,163,184,0.1);
+      border-radius: 3px;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .pb-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--pb-accent-dim), var(--pb-accent), #e879f9);
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+
+    /* ── Save template modal ── */
+    .pb-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .pb-modal-overlay.show { display: flex; }
+    .pb-modal-box {
+      background: #12121a;
+      border: 1px solid rgba(168,85,247,0.4);
+      border-radius: 16px;
+      padding: 28px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    }
+    .pb-modal-box h3 {
+      color: var(--pb-accent);
+      font-size: 16px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pb-modal-input {
+      width: 100%;
+      padding: 12px 14px;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(148,163,184,0.2);
+      border-radius: 8px;
+      color: var(--light);
+      font-size: 14px;
+      margin-bottom: 16px;
+      transition: border-color 0.2s;
+    }
+    .pb-modal-input:focus { outline: none; border-color: var(--pb-accent); }
+    .pb-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════
+     IA PROJECT — CRIADOR DE PROMPTS (Módulo refatorado)
+     Para integrar ao sistema: substituir o conteúdo de #ia-tab-prompt
+     por este bloco, e incluir o <script> abaixo antes de </body>
+══════════════════════════════════════════════════════════════ -->
+
+<div id="pb-root">
+
+  <!-- HEADER -->
+  <div class="pb-header">
+    <div class="pb-header-left">
+      <h2><i class="fas fa-wand-sparkles"></i> Criador de Prompts — Ensaio IA</h2>
+      <p>Siga os passos abaixo para gerar prompts fotorrealistas personalizados.</p>
+    </div>
+    <div class="pb-header-actions">
+      <button class="pb-btn pb-btn-ghost pb-btn-sm" onclick="PBController.loadTemplates()" title="Templates salvos">
+        <i class="fas fa-bookmark"></i> Templates
+      </button>
+      <button class="pb-btn pb-btn-ghost pb-btn-sm" onclick="PBController.resetAll()" title="Limpar tudo">
+        <i class="fas fa-rotate-left"></i> Limpar
+      </button>
+    </div>
+  </div>
+
+  <!-- PROGRESS BAR -->
+  <div class="pb-progress-bar-wrap">
+    <div class="pb-progress-bar" id="pb-progress" style="width:20%"></div>
+  </div>
+
+  <!-- STEP INDICATOR -->
+  <div class="pb-stepper" id="pb-stepper">
+    <div class="pb-step-item" data-step="1" data-state="active" onclick="PBController.goToStep(1)">
+      <div class="pb-step-circle">1</div>
+      <span class="pb-step-label">Contexto</span>
+    </div>
+    <div class="pb-step-line"></div>
+    <div class="pb-step-item" data-step="2" data-state="idle" onclick="PBController.goToStep(2)">
+      <div class="pb-step-circle">2</div>
+      <span class="pb-step-label">Visual</span>
+    </div>
+    <div class="pb-step-line"></div>
+    <div class="pb-step-item" data-step="3" data-state="idle" onclick="PBController.goToStep(3)">
+      <div class="pb-step-circle">3</div>
+      <span class="pb-step-label">Cenário</span>
+    </div>
+    <div class="pb-step-line"></div>
+    <div class="pb-step-item" data-step="4" data-state="idle" onclick="PBController.goToStep(4)">
+      <div class="pb-step-circle">4</div>
+      <span class="pb-step-label">Pose & Técnica</span>
+    </div>
+    <div class="pb-step-line"></div>
+    <div class="pb-step-item" data-step="5" data-state="idle" onclick="PBController.goToStep(5)">
+      <div class="pb-step-circle"><i class="fas fa-eye" style="font-size:12px;"></i></div>
+      <span class="pb-step-label">Preview</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       STEP 1 — CONTEXTO PROFISSIONAL
+  ═══════════════════════════════════════ -->
+  <div id="pb-step-1" class="pb-step-panel active">
+    <div class="pb-card accent-border">
+      <div class="pb-section-title"><i class="fas fa-briefcase"></i> Contexto Profissional</div>
+      <p class="pb-section-desc">Qual é o contexto de atuação da modelo? Selecione até 3 opções (opcional).</p>
+
+      <div class="pb-field">
+        <div class="pb-field-header">
+          <span class="pb-field-label">
+            Área de Atuação
+            <span class="opt">(opcional)</span>
+          </span>
+          <div class="pb-field-meta">
+            <span class="pb-counter" id="pb-count-profissao">0 / 3</span>
+            <div class="pb-tooltip-btn">
+              ?
+              <div class="pb-tooltip-text">O contexto profissional aparece no início do prompt para guiar a IA no estilo visual do ensaio.</div>
+            </div>
+          </div>
+        </div>
+        <div class="pb-chips" id="pb-chips-profissao">
+          <span class="pb-chips-section">Beleza &amp; Estética</span>
+          <div class="pb-chip" data-field="profissao" data-value="hair stylist / cabeleireira" onclick="PBState.toggle(this)">Hair Stylist / Cabeleireira</div>
+          <div class="pb-chip" data-field="profissao" data-value="nail designer / manicure" onclick="PBState.toggle(this)">Nail Designer / Manicure</div>
+          <div class="pb-chip" data-field="profissao" data-value="lash designer" onclick="PBState.toggle(this)">Lash Designer</div>
+          <div class="pb-chip" data-field="profissao" data-value="maquiadora / makeup artist" onclick="PBState.toggle(this)">Maquiadora / Makeup Artist</div>
+          <div class="pb-chip" data-field="profissao" data-value="esteticista / skincare" onclick="PBState.toggle(this)">Esteticista / Skincare</div>
+          <span class="pb-chips-section">Saúde &amp; Bem-Estar</span>
+          <div class="pb-chip" data-field="profissao" data-value="psicóloga / terapeuta" onclick="PBState.toggle(this)">Psicóloga / Terapeuta</div>
+          <div class="pb-chip" data-field="profissao" data-value="médica / clínica" onclick="PBState.toggle(this)">Médica / Clínica</div>
+          <div class="pb-chip" data-field="profissao" data-value="nutricionista" onclick="PBState.toggle(this)">Nutricionista</div>
+          <div class="pb-chip" data-field="profissao" data-value="personal trainer / coach fitness" onclick="PBState.toggle(this)">Personal Trainer</div>
+          <span class="pb-chips-section">Negócios &amp; Serviços</span>
+          <div class="pb-chip" data-field="profissao" data-value="advogada / jurídico" onclick="PBState.toggle(this)">Advogada / Jurídico</div>
+          <div class="pb-chip" data-field="profissao" data-value="coach / mentora de negócios" onclick="PBState.toggle(this)">Coach / Mentora</div>
+          <div class="pb-chip" data-field="profissao" data-value="criadora de conteúdo / influencer" onclick="PBState.toggle(this)">Criadora de Conteúdo / Influencer</div>
+          <div class="pb-chip" data-field="profissao" data-value="empreendedora / empresária" onclick="PBState.toggle(this)">Empreendedora / Empresária</div>
+          <div class="pb-chip" data-field="profissao" data-value="professora / educadora" onclick="PBState.toggle(this)">Professora / Educadora</div>
+          <div class="pb-chip" data-field="profissao" data-value="arquiteta / designer de interiores" onclick="PBState.toggle(this)">Arquiteta / Designer de Interiores</div>
+        </div>
+        <div class="pb-limit-msg" id="pb-limit-profissao">⚠️ Máximo de 3 seleções atingido.</div>
+      </div>
+    </div>
+
+    <div class="pb-nav-row">
+      <div class="pb-nav-row-left"></div>
+      <div class="pb-nav-row-right">
+        <button class="pb-btn pb-btn-primary" onclick="PBController.nextStep()">
+          Próximo <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       STEP 2 — VISUAL (Look + Cabelo)
+  ═══════════════════════════════════════ -->
+  <div id="pb-step-2" class="pb-step-panel">
+    <div class="pb-card accent-border">
+      <div class="pb-section-title"><i class="fas fa-shirt"></i> Look &amp; Cabelo</div>
+      <p class="pb-section-desc">Defina o visual da modelo — roupa, estilo e cabelo.</p>
+
+      <div class="pb-grid-2">
+        <!-- Look -->
+        <div class="pb-field">
+          <div class="pb-field-header">
+            <span class="pb-field-label">Look Completo <span class="req">*</span></span>
+            <div class="pb-field-meta">
+              <span class="pb-counter" id="pb-count-look">0 / 3</span>
+            </div>
+          </div>
+          <div class="pb-chips" id="pb-chips-look">
+            <span class="pb-chips-section">Social &amp; Corporativo</span>
+            <div class="pb-chip" data-field="look" data-value="Camisa social branca com calça de alfaiataria slim" onclick="PBState.toggle(this)">Social clássico</div>
+            <div class="pb-chip" data-field="look" data-value="Terno feminino completo em cor escura ou cinza" onclick="PBState.toggle(this)">Terno feminino</div>
+            <div class="pb-chip" data-field="look" data-value="Blazer estruturado com calça pantalona e camisa" onclick="PBState.toggle(this)">Blazer executivo</div>
+            <div class="pb-chip" data-field="look" data-value="Vestido midi social em cores sólidas" onclick="PBState.toggle(this)">Vestido midi social</div>
+            <span class="pb-chips-section">Elegante &amp; Glam</span>
+            <div class="pb-chip" data-field="look" data-value="Vestido longo em tom champanhe, vinho ou verde esmeralda" onclick="PBState.toggle(this)">Vestido longo elegante</div>
+            <div class="pb-chip" data-field="look" data-value="Vestido com brilho sutil ou bordado fino" onclick="PBState.toggle(this)">Glam com brilho</div>
+            <div class="pb-chip" data-field="look" data-value="Conjunto de seda com blazer levemente sobreposto" onclick="PBState.toggle(this)">Conjunto de seda</div>
+            <span class="pb-chips-section">Casual &amp; Lifestyle</span>
+            <div class="pb-chip" data-field="look" data-value="Jeans delavê com blusa básica e tênis branco" onclick="PBState.toggle(this)">Casual jeans</div>
+            <div class="pb-chip" data-field="look" data-value="Vestido floral leve midi com sandálias rasteiras" onclick="PBState.toggle(this)">Floral lifestyle</div>
+            <div class="pb-chip" data-field="look" data-value="Conjunto cropped de malha com saia midi rodada" onclick="PBState.toggle(this)">Cropped + saia midi</div>
+            <span class="pb-chips-section">Editorial &amp; Fashion</span>
+            <div class="pb-chip" data-field="look" data-value="Vestido estruturado com decote marcante e cor vibrante" onclick="PBState.toggle(this)">Editorial vibrante</div>
+            <div class="pb-chip" data-field="look" data-value="Look todo preto com detalhes em couro e corte dramático" onclick="PBState.toggle(this)">All black dramático</div>
+            <div class="pb-chip" data-field="look" data-value="Blazer oversized xadrez com calça slim de cor contrastante" onclick="PBState.toggle(this)">Blazer xadrez ousado</div>
+            <span class="pb-chips-section">Profissional (Saúde &amp; Estética)</span>
+            <div class="pb-chip" data-field="look" data-value="Jaleco branco clássico com roupa social por baixo" onclick="PBState.toggle(this)">Jaleco branco</div>
+            <div class="pb-chip" data-field="look" data-value="Avental estético clean em preto, branco ou cinza" onclick="PBState.toggle(this)">Avental estético</div>
+            <div class="pb-chip" data-field="look" data-value="Camisa polo com logotipo e calça lisa coordenada" onclick="PBState.toggle(this)">Uniforme polo</div>
+          </div>
+          <input type="text" class="pb-custom-input" id="pb-look-custom" placeholder="Descreva seu look personalizado…" oninput="PBState.updateCustom('look', this.value)">
+          <div style="margin-top:8px;">
+            <span class="pb-chip" style="font-size:12px;" onclick="PBUI.toggleCustomInput('pb-look-custom', this)">
+              <i class="fas fa-pen"></i> Personalizado
+            </span>
+          </div>
+          <div class="pb-limit-msg" id="pb-limit-look">⚠️ Máximo de 3 seleções atingido.</div>
+        </div>
+
+        <!-- Cabelo -->
+        <div class="pb-field">
+          <div class="pb-field-header">
+            <span class="pb-field-label">Estilo do Cabelo <span class="req">*</span></span>
+            <div class="pb-field-meta">
+              <span class="pb-counter" id="pb-count-cabelo">0 / 1</span>
+              <div class="pb-tooltip-btn">
+                ?
+                <div class="pb-tooltip-text">Selecione 1 estilo. O prompt incluirá restrição automática para não alterar o cabelo da foto de referência.</div>
+              </div>
+            </div>
+          </div>
+          <div class="pb-chips" id="pb-chips-cabelo">
+            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="liso natural" onclick="PBState.toggle(this)">Liso natural</div>
+            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="liso com brilho intenso" onclick="PBState.toggle(this)">Liso brilhante</div>
+            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="ondulado leve e natural" onclick="PBState.toggle(this)">Ondulado leve</div>
+            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="ondulado volumoso e definido" onclick="PBState.toggle(this)">Ondulado volumoso</div>
+            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="cacheado definido e volumoso" onclick="PBState.toggle(this)">Cacheado definido</div>
+            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="crespo natural e volumoso" onclick="PBState.toggle(this)">Crespo natural</div>
+            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="preso em coque elegante" onclick="PBState.toggle(this)">Coque elegante</div>
+            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="semi-preso com mechas soltas" onclick="PBState.toggle(this)">Semi-preso</div>
+            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="trança lateral ou embutida" onclick="PBState.toggle(this)">Trança</div>
+          </div>
+          <div class="pb-limit-msg" id="pb-limit-cabelo">⚠️ Apenas 1 seleção permitida.</div>
+        </div>
+      </div>
+
+      <div class="pb-error-msg" id="pb-err-2"><i class="fas fa-exclamation-circle"></i> <span id="pb-err-2-text"></span></div>
+    </div>
+
+    <div class="pb-nav-row">
+      <div class="pb-nav-row-left">
+        <button class="pb-btn pb-btn-ghost" onclick="PBController.prevStep()"><i class="fas fa-arrow-left"></i> Voltar</button>
+      </div>
+      <div class="pb-nav-row-right">
+        <button class="pb-btn pb-btn-primary" onclick="PBController.nextStep()">Próximo <i class="fas fa-arrow-right"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       STEP 3 — CENÁRIO & ILUMINAÇÃO
+  ═══════════════════════════════════════ -->
+  <div id="pb-step-3" class="pb-step-panel">
+    <div class="pb-card accent-border">
+      <div class="pb-section-title"><i class="fas fa-image"></i> Cenário, Ambiente &amp; Iluminação</div>
+      <p class="pb-section-desc">Onde e como a foto será tirada. Escolha até 3 ambientes e elementos de cena.</p>
+
+      <div class="pb-grid-2">
+        <!-- Ambiente -->
+        <div class="pb-field">
+          <div class="pb-field-header">
+            <span class="pb-field-label">Ambiente / Cenário <span class="req">*</span></span>
+            <span class="pb-counter" id="pb-count-ambiente">0 / 3</span>
+          </div>
+          <div class="pb-chips" id="pb-chips-ambiente">
+            <span class="pb-chips-section">Interno</span>
+            <div class="pb-chip" data-field="ambiente" data-value="estúdio fotográfico profissional com fundo infinito branco" onclick="PBState.toggle(this)">Estúdio fundo branco</div>
+            <div class="pb-chip" data-field="ambiente" data-value="escritório moderno com design contemporâneo" onclick="PBState.toggle(this)">Escritório moderno</div>
+            <div class="pb-chip" data-field="ambiente" data-value="sala de estar elegante com decoração sofisticada" onclick="PBState.toggle(this)">Sala elegante</div>
+            <div class="pb-chip" data-field="ambiente" data-value="biblioteca ou acervo com estantes de livros ao fundo" onclick="PBState.toggle(this)">Biblioteca</div>
+            <div class="pb-chip" data-field="ambiente" data-value="clínica ou consultório moderno e clean" onclick="PBState.toggle(this)">Clínica / Consultório</div>
+            <div class="pb-chip" data-field="ambiente" data-value="salão de beleza moderno com espelhos e equipamentos" onclick="PBState.toggle(this)">Salão de beleza</div>
+            <span class="pb-chips-section">Externo</span>
+            <div class="pb-chip" data-field="ambiente" data-value="jardim com flores e vegetação natural" onclick="PBState.toggle(this)">Jardim florido</div>
+            <div class="pb-chip" data-field="ambiente" data-value="varanda com vista urbana e luz do pôr do sol" onclick="PBState.toggle(this)">Varanda urbana</div>
+            <div class="pb-chip" data-field="ambiente" data-value="rua de cidade moderna com fachadas contemporâneas" onclick="PBState.toggle(this)">Rua urbana</div>
+            <div class="pb-chip" data-field="ambiente" data-value="café ou restaurante chique com decoração minimalista" onclick="PBState.toggle(this)">Café chique</div>
+          </div>
+          <input type="text" class="pb-custom-input" id="pb-ambiente-custom" placeholder="Descreva o cenário personalizado…" oninput="PBState.updateCustom('ambiente', this.value)">
+          <div style="margin-top:8px;">
+            <span class="pb-chip" style="font-size:12px;" onclick="PBUI.toggleCustomInput('pb-ambiente-custom', this)">
+              <i class="fas fa-pen"></i> Personalizado
+            </span>
+          </div>
+          <div class="pb-limit-msg" id="pb-limit-ambiente">⚠️ Máximo de 3 seleções atingido.</div>
+        </div>
+
+        <!-- Detalhes do cenário -->
+        <div class="pb-field">
+          <div class="pb-field-header">
+            <span class="pb-field-label">Elementos do Cenário <span class="req">*</span></span>
+            <span class="pb-counter" id="pb-count-detalhes">0 / 3</span>
+          </div>
+          <div class="pb-chips" id="pb-chips-detalhes">
+            <div class="pb-chip" data-field="detalhes" data-value="plantas naturais e flores como decoração" onclick="PBState.toggle(this)">Plantas e flores</div>
+            <div class="pb-chip" data-field="detalhes" data-value="objetos de trabalho sutis ao fundo" onclick="PBState.toggle(this)">Props profissionais</div>
+            <div class="pb-chip" data-field="detalhes" data-value="mesa de trabalho organizada com notebook" onclick="PBState.toggle(this)">Mesa com notebook</div>
+            <div class="pb-chip" data-field="detalhes" data-value="livros e itens decorativos ao fundo" onclick="PBState.toggle(this)">Livros decorativos</div>
+            <div class="pb-chip" data-field="detalhes" data-value="fundo limpo e desfocado (bokeh suave)" onclick="PBState.toggle(this)">Bokeh suave</div>
+            <div class="pb-chip" data-field="detalhes" data-value="luz solar diagonal pelas janelas com sombras suaves" onclick="PBState.toggle(this)">Luz solar pela janela</div>
+            <div class="pb-chip" data-field="detalhes" data-value="elementos da natureza como galhos e folhagens" onclick="PBState.toggle(this)">Folhagens naturais</div>
+            <div class="pb-chip" data-field="detalhes" data-value="arquitetura contemporânea com linhas limpas" onclick="PBState.toggle(this)">Arquitetura clean</div>
+            <div class="pb-chip" data-field="detalhes" data-value="espelhos e reflexos sutis na composição" onclick="PBState.toggle(this)">Espelhos e reflexos</div>
+          </div>
+          <div class="pb-limit-msg" id="pb-limit-detalhes">⚠️ Máximo de 3 seleções atingido.</div>
+        </div>
+      </div>
+
+      <!-- Iluminação -->
+      <div class="pb-field">
+        <div class="pb-field-header">
+          <span class="pb-field-label">Tipo de Iluminação <span class="req">*</span></span>
+          <div class="pb-field-meta">
+            <span class="pb-counter" id="pb-count-iluminacao">0 / 2</span>
+            <div class="pb-tooltip-btn">
+              ?
+              <div class="pb-tooltip-text">Define como a luz se comporta na cena — interna (artificial controlada) ou externa (luz natural).</div>
+            </div>
+          </div>
+        </div>
+        <div class="pb-chips" id="pb-chips-iluminacao">
+          <div class="pb-chip active" data-field="iluminacao" data-max="2" data-value="AMBIENTE INTERNO com iluminação artificial controlada" onclick="PBState.toggle(this)">🏠 Interno</div>
+          <div class="pb-chip" data-field="iluminacao" data-max="2" data-value="AMBIENTE EXTERNO com luz natural" onclick="PBState.toggle(this)">🌤️ Externo</div>
+          <div class="pb-chip" data-field="iluminacao" data-max="2" data-value="MISTO — interno com luz natural de janela" onclick="PBState.toggle(this)">🪟 Misto (janela)</div>
+          <div class="pb-chip" data-field="iluminacao" data-max="2" data-value="ESTÚDIO com iluminação estroboscópica profissional" onclick="PBState.toggle(this)">💡 Estúdio profissional</div>
+          <div class="pb-chip" data-field="iluminacao" data-max="2" data-value="LUZ GOLDEN HOUR (pôr do sol dourado)" onclick="PBState.toggle(this)">🌅 Golden Hour</div>
+        </div>
+        <div class="pb-limit-msg" id="pb-limit-iluminacao">⚠️ Máximo de 2 seleções atingido.</div>
+      </div>
+
+      <div class="pb-error-msg" id="pb-err-3"><i class="fas fa-exclamation-circle"></i> <span id="pb-err-3-text"></span></div>
+    </div>
+
+    <div class="pb-nav-row">
+      <div class="pb-nav-row-left">
+        <button class="pb-btn pb-btn-ghost" onclick="PBController.prevStep()"><i class="fas fa-arrow-left"></i> Voltar</button>
+      </div>
+      <div class="pb-nav-row-right">
+        <button class="pb-btn pb-btn-primary" onclick="PBController.nextStep()">Próximo <i class="fas fa-arrow-right"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       STEP 4 — POSE, EXPRESSÃO & TÉCNICA
+  ═══════════════════════════════════════ -->
+  <div id="pb-step-4" class="pb-step-panel">
+    <div class="pb-card accent-border">
+      <div class="pb-section-title"><i class="fas fa-person"></i> Pose, Expressão &amp; Nível Técnico</div>
+      <p class="pb-section-desc">Como a modelo se posiciona, qual expressão transmite, a referência visual e o nível de realismo desejado.</p>
+
+      <div class="pb-grid-2">
+        <!-- Pose -->
+        <div class="pb-field">
+          <div class="pb-field-header">
+            <span class="pb-field-label">Pose <span class="req">*</span></span>
+            <span class="pb-counter" id="pb-count-pose">0 / 3</span>
+          </div>
+          <div class="pb-chips" id="pb-chips-pose">
+            <span class="pb-chips-section">Profissional</span>
+            <div class="pb-chip" data-field="pose" data-value="em pé, postura ereta e confiante, olhando para a câmera" onclick="PBState.toggle(this)">Em pé, confiante</div>
+            <div class="pb-chip" data-field="pose" data-value="sentada em cadeira executiva, postura relaxada e profissional" onclick="PBState.toggle(this)">Sentada, executiva</div>
+            <div class="pb-chip" data-field="pose" data-value="apoiada em mesa, postura descontraída e elegante" onclick="PBState.toggle(this)">Apoiada na mesa</div>
+            <div class="pb-chip" data-field="pose" data-value="cruzando os braços levemente, postura de autoridade" onclick="PBState.toggle(this)">Braços cruzados</div>
+            <span class="pb-chips-section">Natural & Lifestyle</span>
+            <div class="pb-chip" data-field="pose" data-value="andando com leveza, movimento natural e dinâmico" onclick="PBState.toggle(this)">Andando, dinâmica</div>
+            <div class="pb-chip" data-field="pose" data-value="sorrindo enquanto olha para baixo com naturalidade" onclick="PBState.toggle(this)">Sorrindo olhar baixo</div>
+            <div class="pb-chip" data-field="pose" data-value="segurando objeto relevante com olhar focado" onclick="PBState.toggle(this)">Segurando objeto</div>
+            <span class="pb-chips-section">Editorial</span>
+            <div class="pb-chip" data-field="pose" data-value="pose editorial com ângulo de câmera criativo e composição ousada" onclick="PBState.toggle(this)">Editorial criativo</div>
+            <div class="pb-chip" data-field="pose" data-value="olhando para o horizonte, perfil elegante" onclick="PBState.toggle(this)">Perfil — horizonte</div>
+          </div>
+          <input type="text" class="pb-custom-input" id="pb-pose-custom" placeholder="Descreva a pose personalizada…" oninput="PBState.updateCustom('pose', this.value)">
+          <div style="margin-top:8px;">
+            <span class="pb-chip" style="font-size:12px;" onclick="PBUI.toggleCustomInput('pb-pose-custom', this)">
+              <i class="fas fa-pen"></i> Personalizado
+            </span>
+          </div>
+          <div class="pb-limit-msg" id="pb-limit-pose">⚠️ Máximo de 3 seleções atingido.</div>
+        </div>
+
+        <!-- Expressão -->
+        <div class="pb-field">
+          <div class="pb-field-header">
+            <span class="pb-field-label">Expressão Facial <span class="req">*</span></span>
+            <span class="pb-counter" id="pb-count-expressao">0 / 2</span>
+          </div>
+          <div class="pb-chips" id="pb-chips-expressao">
+            <div class="pb-chip" data-field="expressao" data-max="2" data-value="expressão serena, confiante e profissional" onclick="PBState.toggle(this)">Serena e profissional</div>
+            <div class="pb-chip" data-field="expressao" data-max="2" data-value="sorriso amplo, energia positiva e vibrante" onclick="PBState.toggle(this)">Sorriso amplo</div>
+            <div class="pb-chip" data-field="expressao" data-max="2" data-value="expressão pensativa, olhar inteligente e reflexivo" onclick="PBState.toggle(this)">Pensativa e reflexiva</div>
+            <div class="pb-chip" data-field="expressao" data-max="2" data-value="expressão de autoridade, olhar direto e determinado" onclick="PBState.toggle(this)">Autoridade</div>
+            <div class="pb-chip" data-field="expressao" data-max="2" data-value="expressão suave, olhar gentil e empático" onclick="PBState.toggle(this)">Suave e empática</div>
+            <div class="pb-chip" data-field="expressao" data-max="2" data-value="expressão editorial intensa, olhar marcante" onclick="PBState.toggle(this)">Editorial intensa</div>
+          </div>
+          <div class="pb-limit-msg" id="pb-limit-expressao">⚠️ Máximo de 2 seleções atingido.</div>
+        </div>
+      </div>
+
+      <div class="pb-grid-2">
+        <!-- Referência Visual -->
+        <div class="pb-field">
+          <div class="pb-field-header">
+            <span class="pb-field-label">Referência Visual <span class="req">*</span></span>
+            <span class="pb-counter" id="pb-count-refvisual">0 / 2</span>
+          </div>
+          <div class="pb-chips" id="pb-chips-refvisual">
+            <div class="pb-chip" data-field="refvisual" data-max="2" data-value="Editorial Vogue, luz suave dourada, fundo escuro texturizado" onclick="PBState.toggle(this)">Editorial Vogue</div>
+            <div class="pb-chip" data-field="refvisual" data-max="2" data-value="Fotografia beauty glam, lente 105mm macro, pele iluminada" onclick="PBState.toggle(this)">Beauty Glam</div>
+            <div class="pb-chip" data-field="refvisual" data-max="2" data-value="Branding pessoal moderno, composição limpa, luz natural suave" onclick="PBState.toggle(this)">Branding Pessoal</div>
+            <div class="pb-chip" data-field="refvisual" data-max="2" data-value="Retrato corporativo premium, iluminação de estúdio, fundo neutro" onclick="PBState.toggle(this)">Corporativo Premium</div>
+            <div class="pb-chip" data-field="refvisual" data-max="2" data-value="Lifestyle editorial, luz natural ambiente, autêntico" onclick="PBState.toggle(this)">Lifestyle Editorial</div>
+            <div class="pb-chip" data-field="refvisual" data-max="2" data-value="Fotografia fashion contemporânea, ângulo criativo, composição ousada" onclick="PBState.toggle(this)">Fashion Contemporâneo</div>
+          </div>
+          <div class="pb-limit-msg" id="pb-limit-refvisual">⚠️ Máximo de 2 seleções atingido.</div>
+        </div>
+
+        <!-- Nível Técnico -->
+        <div class="pb-field">
+          <div class="pb-field-header">
+            <span class="pb-field-label">Nível Técnico <span class="req">*</span></span>
+            <span class="pb-counter" id="pb-count-realismo">0 / 1</span>
+          </div>
+          <div class="pb-chips" id="pb-chips-realismo">
+            <div class="pb-chip" data-field="realismo" data-max="1" data-value="Hiper-realista (máximo detalhe fotográfico, textura de pele autêntica, resolução ultra alta)" onclick="PBState.toggle(this)">Hiper-realista</div>
+            <div class="pb-chip active" data-field="realismo" data-max="1" data-value="Fotorrealista profissional (qualidade DSLR, iluminação cinematográfica)" onclick="PBState.toggle(this)">Fotorrealista profissional</div>
+            <div class="pb-chip" data-field="realismo" data-max="1" data-value="Realista com leve pós-produção editorial (contraste suave, cores equilibradas)" onclick="PBState.toggle(this)">Realista + editorial</div>
+          </div>
+          <div class="pb-limit-msg" id="pb-limit-realismo">⚠️ Apenas 1 seleção permitida.</div>
+        </div>
+      </div>
+
+      <div class="pb-error-msg" id="pb-err-4"><i class="fas fa-exclamation-circle"></i> <span id="pb-err-4-text"></span></div>
+    </div>
+
+    <div class="pb-nav-row">
+      <div class="pb-nav-row-left">
+        <button class="pb-btn pb-btn-ghost" onclick="PBController.prevStep()"><i class="fas fa-arrow-left"></i> Voltar</button>
+      </div>
+      <div class="pb-nav-row-right">
+        <button class="pb-btn pb-btn-primary" onclick="PBController.generateAndPreview()">
+          <i class="fas fa-wand-sparkles"></i> Gerar Preview
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       STEP 5 — PREVIEW & EXPORT
+  ═══════════════════════════════════════ -->
+  <div id="pb-step-5" class="pb-step-panel">
+    <div class="pb-card accent-border">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <div class="pb-section-title" style="margin-bottom:0;">
+          <i class="fas fa-sparkles"></i> Prompts Gerados
+          <span class="pb-live-badge"><span class="pb-live-dot"></span> LIVE</span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="pb-btn pb-btn-primary pb-btn-sm" onclick="PBController.copyAll()">
+            <i class="fas fa-copy"></i> Copiar Tudo
+          </button>
+          <button class="pb-btn pb-btn-ghost pb-btn-sm" onclick="PBController.openSaveModal()">
+            <i class="fas fa-bookmark"></i> Salvar Template
+          </button>
+        </div>
+      </div>
+
+      <!-- Prompt output area -->
+      <div id="pb-prompts-output">
+        <div class="pb-preview-empty">
+          <i class="fas fa-wand-sparkles"></i>
+          Nenhum prompt gerado ainda. Preencha os campos e clique em <strong style="color:var(--pb-accent);">Gerar Preview</strong>.
+        </div>
+      </div>
+
+      <div class="pb-copy-flash" id="pb-copy-flash"><i class="fas fa-check-circle"></i> Todos os prompts copiados!</div>
+    </div>
+
+    <div class="pb-nav-row">
+      <div class="pb-nav-row-left">
+        <button class="pb-btn pb-btn-ghost" onclick="PBController.prevStep()"><i class="fas fa-arrow-left"></i> Editar</button>
+        <button class="pb-btn pb-btn-ghost pb-btn-sm" onclick="PBController.resetAll()">
+          <i class="fas fa-rotate-left"></i> Novo Prompt
+        </button>
+      </div>
+      <div class="pb-nav-row-right">
+        <button class="pb-btn pb-btn-primary" onclick="PBController.generateAndPreview()">
+          <i class="fas fa-refresh"></i> Rege​rar
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /pb-root -->
+
+<!-- ══════════════════════════════════════
+     TEMPLATES PANEL (slide-in card)
+══════════════════════════════════════ -->
+<div id="pb-templates-panel" style="display:none;max-width:820px;margin:16px auto 0;">
+  <div class="pb-card accent-border">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div class="pb-section-title" style="margin-bottom:0;"><i class="fas fa-bookmark"></i> Templates Salvos</div>
+      <button class="pb-btn pb-btn-ghost pb-btn-sm" onclick="PBController.closeTemplates()">
+        <i class="fas fa-times"></i> Fechar
+      </button>
+    </div>
+    <div id="pb-templates-list"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SAVE TEMPLATE MODAL
+══════════════════════════════════════ -->
+<div class="pb-modal-overlay" id="pb-save-modal">
+  <div class="pb-modal-box">
+    <h3><i class="fas fa-bookmark"></i> Salvar como Template</h3>
+    <input type="text" class="pb-modal-input" id="pb-template-name" placeholder="Ex: Ensaio Clínica — Look Branco…" maxlength="60">
+    <div class="pb-modal-actions">
+      <button class="pb-btn pb-btn-ghost pb-btn-sm" onclick="PBController.closeSaveModal()">Cancelar</button>
+      <button class="pb-btn pb-btn-primary pb-btn-sm" onclick="PBController.saveTemplate()">
+        <i class="fas fa-bookmark"></i> Salvar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     JAVASCRIPT — IA PROJECT PROMPT BUILDER
+     Architecture:
+       PBData     — static config / labels
+       PBState    — chip selection state + localStorage
+       PBService  — prompt generation logic
+       PBUI       — DOM rendering helpers
+       PBController — wizard navigation + wiring
+══════════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+/* ══════════════════════════════════════════════
+   PBData — Static configuration
+══════════════════════════════════════════════ */
+const PBData = {
+  STEPS: [
+    { id: 1, label: 'Contexto' },
+    { id: 2, label: 'Visual' },
+    { id: 3, label: 'Cenário' },
+    { id: 4, label: 'Pose & Técnica' },
+    { id: 5, label: 'Preview' },
+  ],
+
+  REQUIRED_BY_STEP: {
+    2: [
+      { field: 'look',    label: 'Look Completo' },
+      { field: 'cabelo',  label: 'Estilo do Cabelo' },
+    ],
+    3: [
+      { field: 'ambiente',   label: 'Ambiente / Cenário' },
+      { field: 'detalhes',   label: 'Elementos do Cenário' },
+      { field: 'iluminacao', label: 'Tipo de Iluminação' },
+    ],
+    4: [
+      { field: 'pose',       label: 'Pose' },
+      { field: 'expressao',  label: 'Expressão Facial' },
+      { field: 'refvisual',  label: 'Referência Visual' },
+      { field: 'realismo',   label: 'Nível Técnico' },
+    ],
+  },
+
+  MAX_BY_FIELD: {
+    profissao: 3, look: 3, cabelo: 1,
+    ambiente: 3,  detalhes: 3, iluminacao: 2,
+    pose: 3,      expressao: 2, refvisual: 2, realismo: 1,
+  },
+
+  LS_TEMPLATES_KEY: 'pb_templates_v2',
+  LS_STATE_KEY:     'pb_state_v2',
+};
+
+/* ══════════════════════════════════════════════
+   PBState — Selection state management
+══════════════════════════════════════════════ */
+const PBState = (() => {
+  const _state = {};     // field -> Set<string>
+  const _custom = {};    // field -> string (custom text input)
+
+  function _getMax(field, chipEl) {
+    // Check data-max on chip first, then fallback to PBData config
+    if (chipEl && chipEl.dataset.max) return parseInt(chipEl.dataset.max, 10);
+    return PBData.MAX_BY_FIELD[field] || 3;
+  }
+
+  function _updateCounter(field) {
+    const size = (_state[field] || new Set()).size + ((_custom[field] || '').trim() ? 1 : 0);
+    const max  = PBData.MAX_BY_FIELD[field] || 3;
+    const el   = document.getElementById('pb-count-' + field);
+    if (!el) return;
+    el.textContent = size + ' / ' + max;
+    el.classList.toggle('has-sel', size > 0);
+  }
+
+  function _updateBlocked(field) {
+    const size = (_state[field] || new Set()).size;
+    const max  = PBData.MAX_BY_FIELD[field] || 3;
+    document.querySelectorAll(`[data-field="${field}"].pb-chip:not(.active)`).forEach(c => {
+      c.classList.toggle('blocked', size >= max);
+    });
+  }
+
+  function toggle(chipEl) {
+    const field = chipEl.dataset.field;
+    const val   = chipEl.dataset.value;
+    const max   = _getMax(field, chipEl);
+    if (!_state[field]) _state[field] = new Set();
+    const st = _state[field];
+
+    if (chipEl.classList.contains('active')) {
+      chipEl.classList.remove('active');
+      st.delete(val);
+    } else {
+      if (st.size >= max) {
+        const msgEl = document.getElementById('pb-limit-' + field);
+        if (msgEl) { msgEl.classList.add('show'); setTimeout(() => msgEl.classList.remove('show'), 2400); }
+        return;
+      }
+      chipEl.classList.add('active');
+      st.add(val);
+    }
+    _updateCounter(field);
+    _updateBlocked(field);
+    _save();
+    PBService.schedulePreviewRefresh();
+  }
+
+  function updateCustom(field, value) {
+    _custom[field] = value;
+    _updateCounter(field);
+    _save();
+    PBService.schedulePreviewRefresh();
+  }
+
+  function get(field) {
+    const vals = _state[field] ? [..._state[field]] : [];
+    const cv   = (_custom[field] || '').trim();
+    if (cv) vals.push(cv);
+    return vals;
+  }
+
+  function getFirst(field) {
+    return get(field)[0] || null;
+  }
+
+  function reset() {
+    Object.keys(_state).forEach(k => _state[k].clear());
+    Object.keys(_custom).forEach(k => { _custom[k] = ''; });
+    // Re-sync DOM chips
+    document.querySelectorAll('.pb-chip.active').forEach(c => c.classList.remove('active'));
+    // Reset defaults
+    _applyDefaults();
+    Object.keys(PBData.MAX_BY_FIELD).forEach(field => {
+      _updateCounter(field);
+      _updateBlocked(field);
+    });
+    _save();
+  }
+
+  function _applyDefaults() {
+    // Default: realismo chip
+    const defaultRealismo = document.querySelector('[data-field="realismo"][data-value="Fotorrealista profissional (qualidade DSLR, iluminação cinematográfica)"]');
+    if (defaultRealismo) { defaultRealismo.classList.add('active'); if (!_state['realismo']) _state['realismo'] = new Set(); _state['realismo'].add(defaultRealismo.dataset.value); }
+    // Default: iluminacao
+    const defaultIlum = document.querySelector('[data-field="iluminacao"][data-value="AMBIENTE INTERNO com iluminação artificial controlada"]');
+    if (defaultIlum) { defaultIlum.classList.add('active'); if (!_state['iluminacao']) _state['iluminacao'] = new Set(); _state['iluminacao'].add(defaultIlum.dataset.value); }
+  }
+
+  function _save() {
+    try {
+      const snapshot = {};
+      Object.entries(_state).forEach(([k, v]) => { snapshot[k] = [...v]; });
+      localStorage.setItem(PBData.LS_STATE_KEY, JSON.stringify({ chips: snapshot, custom: _custom }));
+    } catch(e) { /* silent */ }
+  }
+
+  function restore() {
+    try {
+      const raw = localStorage.getItem(PBData.LS_STATE_KEY);
+      if (!raw) { _applyDefaults(); return; }
+      const parsed = JSON.parse(raw);
+      const chips  = parsed.chips  || {};
+      const custom = parsed.custom || {};
+      Object.entries(chips).forEach(([field, vals]) => {
+        if (!_state[field]) _state[field] = new Set();
+        vals.forEach(v => {
+          _state[field].add(v);
+          const chipEl = document.querySelector(`[data-field="${field}"][data-value="${CSS.escape(v)}"]`);
+          if (chipEl) chipEl.classList.add('active');
+        });
+      });
+      Object.entries(custom).forEach(([field, val]) => {
+        _custom[field] = val;
+        const inputEl = document.getElementById('pb-' + field + '-custom');
+        if (inputEl && val) { inputEl.value = val; inputEl.classList.add('visible'); }
+      });
+      Object.keys(PBData.MAX_BY_FIELD).forEach(field => {
+        _updateCounter(field);
+        _updateBlocked(field);
+      });
+    } catch(e) { _applyDefaults(); }
+  }
+
+  return { toggle, updateCustom, get, getFirst, reset, restore };
+})();
+
+/* ══════════════════════════════════════════════
+   PBService — Prompt generation logic
+══════════════════════════════════════════════ */
+const PBService = (() => {
+  let _refreshTimer = null;
+
+  function _buildHairBlock(cabeloVals) {
+    const cabelo = cabeloVals[0] || '';
+    if (!cabelo) return '';
+    return `\n**Cabelo:** ${cabelo}, com movimento natural, volume realista e textura autêntica, sem efeito plástico ou artificial. Luz suave destacando os fios, mantendo aparência realista e natural.`;
+  }
+
+  function _buildSinglePrompt(data) {
+    const { look, cabelo, ambiente, detalhes, pose, expressao, refvisual, realismo, profissao, iluminacao } = data;
+
+    const profBloco      = profissao  ? `\n**Contexto profissional:** ${profissao}` : '';
+    const refVisualBloco = refvisual  ? `\n**Referência visual:** ${refvisual}`     : '';
+    const cabeloBloco    = _buildHairBlock([cabelo]);
+    const ilumBloco      = iluminacao || 'iluminação natural, aberta e realista';
+
+    return (
+`edite a foto de referência da modelo em anexo para recriar uma foto realista da mesma, recrie o rosto, traços físicos e corporais o mais fiel possível da foto em anexo.
+- Alta definição, realismo fotográfico extremo, textura de pele autêntica, sem efeito plástico ou suavização exagerada.
+- Ajuste iluminação, cenário e roupas para parecer ensaio profissional, respeitando proporções naturais da modelo.
+${profBloco}
+**Look completo:** ${look}${cabeloBloco}
+**Iluminação:** ${ilumBloco}
+**Ambiente / cenário:** ${ambiente}, com ${detalhes} e iluminação natural, mantendo realismo e coerência com o tema.
+**Pose e expressão:** ${pose}, com ${expressao}, condizente com o contexto do ensaio.${refVisualBloco}
+**Nível técnico:** ${realismo}, ultra detalhado, texturas naturais, iluminação cinematográfica, estilo foto DSLR.
+**Restrições:** [NÃO altere o cabelo original] [NÃO altere sorriso ou traços do rosto] [NÃO suavize artificialmente a pele] [Textura real de pele e tecido] [Proporções naturais sem distorção] [Fotorrealismo extremo, sem aspecto de IA ou pintura digital]`
+    );
+  }
+
+  function generateAll() {
+    const looks     = PBState.get('look');
+    const ambientes = PBState.get('ambiente');
+    const poses     = PBState.get('pose');
+    const expressao = PBState.get('expressao').join(', ');
+    const cabelo    = PBState.getFirst('cabelo') || '';
+    const detalhes  = PBState.get('detalhes').join(', ');
+    const refvisual = PBState.get('refvisual').join(', ');
+    const realismo  = PBState.getFirst('realismo') || 'Fotorrealista profissional';
+    const profissao = PBState.get('profissao').join(', ');
+    const iluminacao= PBState.get('iluminacao').join(', ');
+
+    const combos = [];
+    looks.forEach(look => {
+      ambientes.forEach(ambiente => {
+        poses.forEach(pose => {
+          combos.push({ look, ambiente, pose, cabelo, detalhes, expressao, refvisual, realismo, profissao, iluminacao });
+        });
+      });
+    });
+
+    if (!combos.length) return [];
+
+    return combos.map((combo, idx) => ({
+      label: combos.length > 1 ? `Combinação ${idx + 1} de ${combos.length}` : 'Prompt Gerado',
+      text: _buildSinglePrompt(combo),
+    }));
+  }
+
+  function schedulePreviewRefresh() {
+    if (_refreshTimer) clearTimeout(_refreshTimer);
+    _refreshTimer = setTimeout(() => {
+      if (document.getElementById('pb-step-5').classList.contains('active')) {
+        PBUI.renderPrompts(generateAll());
+      }
+    }, 400);
+  }
+
+  function validateStep(stepId) {
+    const rules = PBData.REQUIRED_BY_STEP[stepId];
+    if (!rules) return null;
+    for (const rule of rules) {
+      const vals = PBState.get(rule.field);
+      if (!vals.length) return rule.label;
+    }
+    return null;
+  }
+
+  return { generateAll, schedulePreviewRefresh, validateStep };
+})();
+
+/* ══════════════════════════════════════════════
+   PBUI — DOM rendering helpers
+══════════════════════════════════════════════ */
+const PBUI = (() => {
+  function renderPrompts(prompts) {
+    const container = document.getElementById('pb-prompts-output');
+    if (!container) return;
+    if (!prompts || !prompts.length) {
+      container.innerHTML = `
+        <div class="pb-preview-empty">
+          <i class="fas fa-wand-sparkles"></i>
+          Nenhum prompt gerado ainda. Preencha os campos e clique em <strong style="color:var(--pb-accent);">Gerar Preview</strong>.
+        </div>`;
+      return;
+    }
+    container.innerHTML = prompts.map((p, i) => `
+      <div class="pb-prompt-item">
+        <div class="pb-prompt-item-header">
+          <span class="pb-prompt-item-label"><i class="fas fa-sparkles"></i> ${escHtml(p.label)}</span>
+          <div class="pb-prompt-item-actions">
+            <button class="pb-btn pb-btn-ghost pb-btn-sm" onclick="PBController.copyPrompt(${i})" title="Copiar este prompt">
+              <i class="fas fa-copy"></i> Copiar
+            </button>
+          </div>
+        </div>
+        <pre class="pb-prompt-text">${escHtml(p.text)}</pre>
+      </div>`
+    ).join('');
+  }
+
+  function setStepState(stepId, state) {
+    const el = document.querySelector(`.pb-step-item[data-step="${stepId}"]`);
+    if (el) {
+      el.dataset.state = state;
+      const circle = el.querySelector('.pb-step-circle');
+      if (state === 'done' && circle) circle.innerHTML = '<i class="fas fa-check" style="font-size:12px;"></i>';
+      else if (circle && stepId !== 5) circle.innerHTML = stepId;
+    }
+  }
+
+  function updateProgress(step) {
+    const bar = document.getElementById('pb-progress');
+    if (bar) bar.style.width = (step / 5 * 100) + '%';
+  }
+
+  function showError(stepId, msg) {
+    const el  = document.getElementById('pb-err-' + stepId);
+    const txt = document.getElementById('pb-err-' + stepId + '-text');
+    if (el && txt) { txt.textContent = msg; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 3500); }
+  }
+
+  function toggleCustomInput(inputId, triggerChip) {
+    const inputEl = document.getElementById(inputId);
+    if (!inputEl) return;
+    const isVisible = inputEl.classList.contains('visible');
+    inputEl.classList.toggle('visible', !isVisible);
+    triggerChip.classList.toggle('active', !isVisible);
+    if (!isVisible) inputEl.focus();
+    else { inputEl.value = ''; const field = inputId.replace('pb-', '').replace('-custom', ''); PBState.updateCustom(field, ''); }
+  }
+
+  function flash(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2500);
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  return { renderPrompts, setStepState, updateProgress, showError, toggleCustomInput, flash, escHtml };
+})();
+
+/* ══════════════════════════════════════════════
+   PBController — Wizard navigation + templates
+══════════════════════════════════════════════ */
+const PBController = (() => {
+  let _current = 1;
+  let _generatedPrompts = [];
+
+  function goToStep(targetStep) {
+    if (targetStep < 1 || targetStep > 5) return;
+    // Hide current
+    const curPanel = document.getElementById('pb-step-' + _current);
+    if (curPanel) curPanel.classList.remove('active');
+    // Update stepper
+    for (let s = 1; s <= 5; s++) {
+      if (s < targetStep)        PBUI.setStepState(s, 'done');
+      else if (s === targetStep) PBUI.setStepState(s, 'active');
+      else                        PBUI.setStepState(s, 'idle');
+    }
+    _current = targetStep;
+    const nextPanel = document.getElementById('pb-step-' + _current);
+    if (nextPanel) nextPanel.classList.add('active');
+    PBUI.updateProgress(targetStep);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function nextStep() {
+    // Validate current step if required
+    const err = PBService.validateStep(_current);
+    if (err) { PBUI.showError(_current, `Campo obrigatório: ${err}`); return; }
+    if (_current < 5) goToStep(_current + 1);
+  }
+
+  function prevStep() {
+    if (_current > 1) goToStep(_current - 1);
+  }
+
+  function generateAndPreview() {
+    const err = PBService.validateStep(_current);
+    if (err) { PBUI.showError(_current, `Campo obrigatório: ${err}`); return; }
+    _generatedPrompts = PBService.generateAll();
+    goToStep(5);
+    PBUI.renderPrompts(_generatedPrompts);
+  }
+
+  function copyPrompt(idx) {
+    const p = _generatedPrompts[idx];
+    if (!p) return;
+    navigator.clipboard.writeText(p.text).then(() => {
+      _showSystemToast('Prompt copiado! ✅', 'success');
+    }).catch(() => { _fallbackCopy(p.text); });
+  }
+
+  function copyAll() {
+    if (!_generatedPrompts.length) return;
+    const combined = _generatedPrompts.map((p, i) =>
+      (_generatedPrompts.length > 1 ? `══ ${p.label.toUpperCase()} ══\n` : '') + p.text
+    ).join('\n\n' + '─'.repeat(60) + '\n\n');
+    navigator.clipboard.writeText(combined).then(() => {
+      PBUI.flash('pb-copy-flash');
+      _showSystemToast('Todos os prompts copiados! ✅', 'success');
+    }).catch(() => { _fallbackCopy(combined); });
+  }
+
+  function _fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    PBUI.flash('pb-copy-flash');
+  }
+
+  function resetAll() {
+    PBState.reset();
+    _generatedPrompts = [];
+    goToStep(1);
+    PBUI.renderPrompts([]);
+    closeTemplates();
+  }
+
+  // ── Templates ────────────────────────────────
+
+  function openSaveModal() {
+    if (!_generatedPrompts.length) { _showSystemToast('Gere os prompts antes de salvar.', 'warning'); return; }
+    document.getElementById('pb-template-name').value = '';
+    document.getElementById('pb-save-modal').classList.add('show');
+    setTimeout(() => document.getElementById('pb-template-name').focus(), 100);
+  }
+
+  function closeSaveModal() {
+    document.getElementById('pb-save-modal').classList.remove('show');
+  }
+
+  function saveTemplate() {
+    const name = document.getElementById('pb-template-name').value.trim();
+    if (!name) { _showSystemToast('Dê um nome ao template.', 'warning'); return; }
+    const templates = _loadTemplates();
+    const tpl = {
+      id:        Date.now(),
+      name,
+      createdAt: new Date().toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }),
+      prompts:   _generatedPrompts,
+    };
+    templates.unshift(tpl);
+    _persistTemplates(templates);
+    closeSaveModal();
+    _showSystemToast(`Template "${name}" salvo! ✅`, 'success');
+  }
+
+  function loadTemplates() {
+    const panel = document.getElementById('pb-templates-panel');
+    const list  = document.getElementById('pb-templates-list');
+    panel.style.display = 'block';
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const templates = _loadTemplates();
+    if (!templates.length) {
+      list.innerHTML = '<div class="pb-empty-state"><i class="fas fa-bookmark"></i>Nenhum template salvo ainda. Gere e salve seus prompts!</div>';
+      return;
+    }
+    list.innerHTML = `<div class="pb-template-grid">` + templates.map(t => `
+      <div class="pb-template-card" onclick="PBController.applyTemplate(${t.id})">
+        <button class="pb-template-delete" onclick="event.stopPropagation(); PBController.deleteTemplate(${t.id})" title="Excluir">
+          <i class="fas fa-trash"></i>
+        </button>
+        <div class="name">${PBUI.escHtml(t.name)}</div>
+        <div class="meta">${t.prompts.length} prompt(s) · ${t.createdAt}</div>
+      </div>`).join('') + '</div>';
+  }
+
+  function closeTemplates() {
+    const panel = document.getElementById('pb-templates-panel');
+    if (panel) panel.style.display = 'none';
+  }
+
+  function applyTemplate(id) {
+    const templates = _loadTemplates();
+    const tpl = templates.find(t => t.id === id);
+    if (!tpl) return;
+    _generatedPrompts = tpl.prompts;
+    goToStep(5);
+    PBUI.renderPrompts(_generatedPrompts);
+    closeTemplates();
+    _showSystemToast(`Template "${tpl.name}" carregado! ✅`, 'success');
+  }
+
+  function deleteTemplate(id) {
+    if (!confirm('Excluir este template?')) return;
+    const templates = _loadTemplates().filter(t => t.id !== id);
+    _persistTemplates(templates);
+    loadTemplates(); // re-render
+  }
+
+  function _loadTemplates() {
+    try { return JSON.parse(localStorage.getItem(PBData.LS_TEMPLATES_KEY) || '[]'); }
+    catch(e) { return []; }
+  }
+
+  function _persistTemplates(arr) {
+    try { localStorage.setItem(PBData.LS_TEMPLATES_KEY, JSON.stringify(arr)); }
+    catch(e) { /* silent */ }
+  }
+
+  // ── Toast — delegates to parent system if available ────
+
+  function _showSystemToast(msg, type) {
+    if (typeof showToast === 'function') { showToast(msg, type); return; }
+    // Standalone fallback
+    const t = document.createElement('div');
+    t.style.cssText = `position:fixed;bottom:24px;right:24px;background:${type==='success'?'#00cc88':type==='warning'?'#ffaa00':'#ff3366'};color:#fff;padding:12px 20px;border-radius:10px;font-weight:700;font-size:14px;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.4);animation:pb-fadein .3s ease;`;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+
+  return {
+    goToStep, nextStep, prevStep,
+    generateAndPreview,
+    copyPrompt, copyAll, resetAll,
+    openSaveModal, closeSaveModal, saveTemplate,
+    loadTemplates, closeTemplates,
+    applyTemplate, deleteTemplate,
+  };
+})();
+
+/* ══════════════════════════════════════════════
+   INIT — Restore state on load
+══════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  PBState.restore();
+
+  // Close save modal on overlay click
+  document.getElementById('pb-save-modal').addEventListener('click', function(e) {
+    if (e.target === this) PBController.closeSaveModal();
+  });
+
+  // Enter key on template name input
+  document.getElementById('pb-template-name').addEventListener('keydown', e => {
+    if (e.key === 'Enter') PBController.saveTemplate();
+  });
+});
+
+
+</script>
+</body>
+</html>
