@@ -3,18 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Criador de Prompts — IA PROJECT</title>
+  <title>Criador de Prompts — IA PROJECT v3</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /*
-    ╔══════════════════════════════════════════════════════════════╗
-    ║  IA PROJECT — PROMPT BUILDER MODULE                         ║
-    ║  Drop-in replacement for #ia-tab-prompt                     ║
-    ║  Reuses system :root CSS variables                          ║
-    ╚══════════════════════════════════════════════════════════════╝
-    */
-
-    /* ── Fallback :root (active only when loaded standalone) ── */
     :root {
       --primary:        #00d9ff;
       --primary-dark:   #0099cc;
@@ -32,8 +23,6 @@
       --glass-light:    rgba(30, 30, 45, 0.8);
       --border:         rgba(100, 100, 150, 0.2);
       --shadow:         0 8px 32px rgba(0, 0, 0, 0.3);
-
-      /* Module-specific */
       --pb-accent:      #a855f7;
       --pb-accent-dim:  #7c3aed;
       --pb-accent-glow: rgba(168, 85, 247, 0.25);
@@ -41,7 +30,6 @@
       --pb-step-active: #a855f7;
     }
 
-    /* ── Standalone body (stripped when embedded) ── */
     body {
       background: linear-gradient(135deg, var(--darker), var(--dark));
       color: var(--light);
@@ -51,622 +39,319 @@
       line-height: 1.6;
     }
 
-    /* ══════════════════════════════════════════════
-       PB ROOT CONTAINER
-    ══════════════════════════════════════════════ */
-    #pb-root {
-      max-width: 820px;
-      margin: 0 auto;
-    }
+    #pb-root { max-width: 860px; margin: 0 auto; }
 
-    /* ── Header ── */
+    /* HEADER */
     .pb-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 28px;
-      flex-wrap: wrap;
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 16px; margin-bottom: 28px; flex-wrap: wrap;
     }
     .pb-header-left h2 {
-      font-size: 22px;
-      font-weight: 800;
-      color: var(--pb-accent);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 4px;
-      letter-spacing: -0.3px;
+      font-size: 22px; font-weight: 800; color: var(--pb-accent);
+      display: flex; align-items: center; gap: 10px; margin-bottom: 4px; letter-spacing: -0.3px;
     }
-    .pb-header-left p {
-      color: var(--gray);
-      font-size: 13px;
-    }
-    .pb-header-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
+    .pb-header-left p { color: var(--gray); font-size: 13px; }
+    .pb-header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* VERSION BADGE */
+    .pb-version-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 10px; color: #e879f9;
+      background: rgba(232,121,249,0.1); border: 1px solid rgba(232,121,249,0.3);
+      border-radius: 20px; padding: 2px 10px; font-weight: 700; letter-spacing: 1px;
+      margin-left: 8px;
     }
 
-    /* ── Step Indicator (Wizard) ── */
+    /* PRESETS BAR */
+    .pb-presets-bar {
+      display: flex; align-items: flex-start; gap: 10px; margin-bottom: 16px;
+      background: rgba(168,85,247,0.07); border: 1px solid rgba(168,85,247,0.2);
+      border-radius: 12px; padding: 10px 14px; flex-wrap: wrap;
+    }
+    .pb-presets-bar-label {
+      font-size: 11px; font-weight: 700; color: var(--pb-accent); letter-spacing: 0.8px;
+      white-space: nowrap; padding-top: 2px; display: flex; align-items: center; gap: 5px;
+    }
+    .pb-presets-chips-row {
+      display: flex; flex-wrap: wrap; gap: 6px; flex: 1;
+    }
+    .pb-preset-quick {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 5px 11px; border-radius: 20px; cursor: pointer;
+      border: 1.5px solid rgba(168,85,247,0.35);
+      background: rgba(168,85,247,0.1); color: #e9d5ff;
+      font-size: 12px; font-weight: 600; transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .pb-preset-quick:hover {
+      background: rgba(168,85,247,0.25); border-color: var(--pb-accent);
+      box-shadow: 0 2px 10px rgba(168,85,247,0.3); transform: translateY(-1px);
+    }
+
+    /* STEPPER */
     .pb-stepper {
-      display: flex;
-      align-items: center;
-      gap: 0;
-      margin-bottom: 28px;
-      overflow-x: auto;
-      padding-bottom: 4px;
-      scrollbar-width: none;
+      display: flex; align-items: center; gap: 0; margin-bottom: 28px;
+      overflow-x: auto; padding-bottom: 4px; scrollbar-width: none;
     }
     .pb-stepper::-webkit-scrollbar { display: none; }
-
-    .pb-step-item {
-      display: flex;
-      align-items: center;
-      gap: 0;
-      flex-shrink: 0;
-    }
+    .pb-step-item { display: flex; align-items: center; gap: 0; flex-shrink: 0; }
     .pb-step-circle {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
+      width: 34px; height: 34px; border-radius: 50%;
       border: 2px solid rgba(148, 163, 184, 0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--gray);
-      background: rgba(15, 12, 30, 0.8);
-      transition: all 0.3s ease;
-      cursor: pointer;
-      position: relative;
-      z-index: 1;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: var(--gray);
+      background: rgba(15, 12, 30, 0.8); transition: all 0.3s ease;
+      cursor: pointer; position: relative; z-index: 1;
     }
-    .pb-step-label {
-      font-size: 11px;
-      color: var(--gray);
-      white-space: nowrap;
-      margin: 0 8px;
-      font-weight: 600;
-      transition: color 0.3s;
-    }
-    .pb-step-line {
-      width: 36px;
-      height: 2px;
-      background: rgba(148, 163, 184, 0.15);
-      flex-shrink: 0;
-      transition: background 0.3s;
-    }
-
-    /* States */
-    .pb-step-item[data-state="done"] .pb-step-circle {
-      border-color: var(--pb-step-done);
-      background: rgba(0, 204, 136, 0.15);
-      color: var(--pb-step-done);
-    }
+    .pb-step-label { font-size: 11px; color: var(--gray); white-space: nowrap; margin: 0 8px; font-weight: 600; transition: color 0.3s; }
+    .pb-step-line { width: 36px; height: 2px; background: rgba(148, 163, 184, 0.15); flex-shrink: 0; transition: background 0.3s; }
+    .pb-step-item[data-state="done"] .pb-step-circle { border-color: var(--pb-step-done); background: rgba(0,204,136,0.15); color: var(--pb-step-done); }
     .pb-step-item[data-state="done"] .pb-step-label { color: var(--pb-step-done); }
     .pb-step-item[data-state="done"] + .pb-step-line { background: var(--pb-step-done); }
-
-    .pb-step-item[data-state="active"] .pb-step-circle {
-      border-color: var(--pb-accent);
-      background: var(--pb-accent-glow);
-      color: var(--pb-accent);
-      box-shadow: 0 0 12px rgba(168,85,247,0.4);
-    }
+    .pb-step-item[data-state="active"] .pb-step-circle { border-color: var(--pb-accent); background: var(--pb-accent-glow); color: var(--pb-accent); box-shadow: 0 0 12px rgba(168,85,247,0.4); }
     .pb-step-item[data-state="active"] .pb-step-label { color: var(--pb-accent); }
 
-    /* ── Steps Panel ── */
-    .pb-step-panel {
-      display: none;
-      animation: pb-fadein 0.3s ease;
-    }
+    /* PANELS */
+    .pb-step-panel { display: none; animation: pb-fadein 0.3s ease; }
     .pb-step-panel.active { display: block; }
+    @keyframes pb-fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-    @keyframes pb-fadein {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ── Glass Card ── */
+    /* CARD */
     .pb-card {
-      background: var(--glass);
-      backdrop-filter: blur(10px);
-      border-radius: 16px;
-      border: 1px solid var(--border);
-      padding: 24px;
-      box-shadow: var(--shadow);
-      margin-bottom: 16px;
+      background: var(--glass); backdrop-filter: blur(10px);
+      border-radius: 16px; border: 1px solid var(--border);
+      padding: 24px; box-shadow: var(--shadow); margin-bottom: 16px;
     }
-    .pb-card.accent-border {
-      border-color: rgba(168, 85, 247, 0.35);
-    }
+    .pb-card.accent-border { border-color: rgba(168, 85, 247, 0.35); }
 
-    /* ── Section Title inside card ── */
     .pb-section-title {
-      font-size: 11px;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--pb-accent);
-      font-weight: 700;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--pb-accent); font-weight: 700; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
     }
-    .pb-section-desc {
-      color: var(--gray);
-      font-size: 13px;
-      margin-bottom: 20px;
-      line-height: 1.6;
-    }
+    .pb-section-desc { color: var(--gray); font-size: 13px; margin-bottom: 20px; line-height: 1.6; }
 
-    /* ── Multi-Select Chips ── */
+    /* FIELDS */
     .pb-field { margin-bottom: 22px; }
-
-    .pb-field-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 10px;
-      gap: 8px;
-    }
+    .pb-field-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 8px; }
     .pb-field-label {
-      font-size: 12px;
-      letter-spacing: 1.2px;
-      text-transform: uppercase;
-      color: #a78bfa;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      font-size: 12px; letter-spacing: 1.2px; text-transform: uppercase;
+      color: #a78bfa; font-weight: 700; display: flex; align-items: center; gap: 6px;
     }
     .pb-field-label .req { color: var(--danger); }
-    .pb-field-label .opt {
-      font-size: 10px;
-      color: var(--gray);
-      text-transform: none;
-      letter-spacing: 0;
-      font-weight: 400;
-    }
-    .pb-field-meta {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .pb-field-label .opt { font-size: 10px; color: var(--gray); text-transform: none; letter-spacing: 0; font-weight: 400; }
+    .pb-field-meta { display: flex; align-items: center; gap: 8px; }
     .pb-counter {
-      font-size: 11px;
-      font-weight: 700;
-      color: #94a3b8;
-      background: rgba(124, 58, 237, 0.15);
-      padding: 2px 9px;
-      border-radius: 20px;
-      border: 1px solid rgba(124, 58, 237, 0.3);
-      transition: all 0.2s;
+      font-size: 11px; font-weight: 700; color: #94a3b8;
+      background: rgba(124, 58, 237, 0.15); padding: 2px 9px; border-radius: 20px;
+      border: 1px solid rgba(124, 58, 237, 0.3); transition: all 0.2s;
     }
-    .pb-counter.has-sel {
-      color: var(--pb-accent);
-      background: rgba(168, 85, 247, 0.25);
-      border-color: var(--pb-accent);
-    }
+    .pb-counter.has-sel { color: var(--pb-accent); background: rgba(168,85,247,0.25); border-color: var(--pb-accent); }
     .pb-tooltip-btn {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: rgba(148,163,184,0.12);
-      border: 1px solid rgba(148,163,184,0.25);
-      color: var(--gray);
-      font-size: 10px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: rgba(148,163,184,0.12); border: 1px solid rgba(148,163,184,0.25);
+      color: var(--gray); font-size: 10px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; position: relative;
     }
     .pb-tooltip-btn:hover .pb-tooltip-text { display: block; }
     .pb-tooltip-text {
-      display: none;
-      position: absolute;
-      bottom: calc(100% + 6px);
-      right: 0;
-      background: #1e1b2e;
-      border: 1px solid rgba(168,85,247,0.3);
-      border-radius: 8px;
-      padding: 8px 12px;
-      font-size: 11.5px;
-      color: #cbd5e1;
-      width: 220px;
-      z-index: 10;
-      line-height: 1.5;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-      pointer-events: none;
+      display: none; position: absolute; bottom: calc(100% + 6px); right: 0;
+      background: #1e1b2e; border: 1px solid rgba(168,85,247,0.3); border-radius: 8px;
+      padding: 8px 12px; font-size: 11.5px; color: #cbd5e1; width: 230px; z-index: 10;
+      line-height: 1.5; box-shadow: 0 4px 20px rgba(0,0,0,0.4); pointer-events: none;
     }
 
+    /* CHIPS */
     .pb-chips { display: flex; flex-wrap: wrap; gap: 7px; }
-
     .pb-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 7px 13px;
-      border-radius: 20px;
-      cursor: pointer;
-      border: 1.5px solid rgba(148, 163, 184, 0.4);
-      background: rgba(15, 12, 30, 0.6);
-      color: #cbd5e1;
-      font-size: 13px;
-      font-weight: 600;
-      transition: all 0.2s;
-      user-select: none;
-      line-height: 1.3;
+      display: inline-flex; align-items: center; gap: 5px; padding: 7px 13px;
+      border-radius: 20px; cursor: pointer; border: 1.5px solid rgba(148, 163, 184, 0.4);
+      background: rgba(15, 12, 30, 0.6); color: #cbd5e1; font-size: 13px;
+      font-weight: 600; transition: all 0.2s; user-select: none; line-height: 1.3;
     }
-    .pb-chip:hover {
-      border-color: var(--pb-accent);
-      color: #e9d5ff;
-      background: rgba(124, 58, 237, 0.12);
-    }
-    .pb-chip.active {
-      border-color: var(--pb-accent);
-      background: rgba(168, 85, 247, 0.22);
-      color: #e9d5ff;
-      box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.35);
-    }
+    .pb-chip:hover { border-color: var(--pb-accent); color: #e9d5ff; background: rgba(124,58,237,0.12); }
+    .pb-chip.active { border-color: var(--pb-accent); background: rgba(168,85,247,0.22); color: #e9d5ff; box-shadow: 0 0 0 1px rgba(168,85,247,0.35); }
     .pb-chip.active::before { content: '✓ '; color: var(--pb-accent); }
-    .pb-chip.blocked {
-      opacity: 0.4;
-      cursor: not-allowed;
-      border-color: rgba(148, 163, 184, 0.15);
-      color: #64748b;
-    }
-
+    .pb-chip.blocked { opacity: 0.4; cursor: not-allowed; border-color: rgba(148,163,184,0.15); color: #64748b; }
     .pb-chips-section {
-      font-size: 10.5px;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: #6d7a9a;
-      font-weight: 700;
-      margin: 14px 0 6px;
-      width: 100%;
-      padding-bottom: 4px;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+      font-size: 10.5px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: #6d7a9a; font-weight: 700; margin: 14px 0 6px; width: 100%;
+      padding-bottom: 4px; border-bottom: 1px solid rgba(148,163,184,0.12);
     }
-
-    .pb-limit-msg {
-      font-size: 11.5px;
-      color: var(--warning);
-      margin-top: 6px;
-      display: none;
-      align-items: center;
-      gap: 5px;
-    }
+    .pb-limit-msg { font-size: 11.5px; color: var(--warning); margin-top: 6px; display: none; align-items: center; gap: 5px; }
     .pb-limit-msg.show { display: flex; }
 
-    /* Custom input under chip */
     .pb-custom-input {
-      width: 100%;
-      padding: 10px 14px;
-      margin-top: 8px;
-      background: rgba(10, 10, 15, 0.6);
-      border: 1px solid rgba(100, 100, 150, 0.2);
-      border-radius: 8px;
-      color: #f0f0f5;
-      font-size: 14px;
-      display: none;
-      transition: border-color 0.2s;
+      width: 100%; padding: 10px 14px; margin-top: 8px;
+      background: rgba(10,10,15,0.6); border: 1px solid rgba(100,100,150,0.2);
+      border-radius: 8px; color: #f0f0f5; font-size: 14px; display: none; transition: border-color 0.2s;
+      box-sizing: border-box;
     }
-    .pb-custom-input:focus {
-      outline: none;
-      border-color: var(--pb-accent);
-      background: rgba(15, 12, 30, 0.8);
-    }
+    .pb-custom-input:focus { outline: none; border-color: var(--pb-accent); background: rgba(15,12,30,0.8); }
     .pb-custom-input.visible { display: block; }
 
-    /* ── Two-column grid ── */
+    /* IDENTITY LOCK SECTION */
+    .pb-identity-lock {
+      background: rgba(0,204,136,0.06);
+      border: 1px solid rgba(0,204,136,0.25);
+      border-radius: 12px; padding: 16px 18px; margin-bottom: 20px;
+    }
+    .pb-identity-lock-title {
+      font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--success); font-weight: 700; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .pb-identity-lock-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    @media(max-width:600px) { .pb-identity-lock-grid { grid-template-columns: 1fr; } }
+    .pb-lock-chip {
+      display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+      background: rgba(0,204,136,0.08); border: 1px solid rgba(0,204,136,0.2);
+      border-radius: 8px; font-size: 12px; color: #a7f3d0; cursor: pointer;
+      transition: all 0.2s; user-select: none;
+    }
+    .pb-lock-chip input[type="checkbox"] { accent-color: var(--success); width: 14px; height: 14px; cursor: pointer; }
+    .pb-lock-chip:hover { border-color: rgba(0,204,136,0.4); background: rgba(0,204,136,0.12); }
+
+    /* LANG TOGGLE */
+    .pb-lang-toggle {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(15,12,30,0.6); border: 1px solid var(--border);
+      border-radius: 12px; padding: 10px 16px; margin-bottom: 20px;
+    }
+    .pb-lang-toggle span { font-size: 12px; color: var(--gray); font-weight: 600; }
+    .pb-lang-toggle label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 700; }
+    .pb-lang-radio { accent-color: var(--pb-accent); }
+    .pb-lang-en { color: #00d9ff; }
+    .pb-lang-pt { color: #a855f7; }
+
+    /* GRIDS */
     .pb-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
     @media(max-width: 600px) { .pb-grid-2 { grid-template-columns: 1fr; } }
 
-    /* ── Buttons ── */
+    /* BUTTONS */
     .pb-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 11px 22px;
-      border-radius: 10px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.25s;
-      border: none;
-      font-size: 14px;
-      white-space: nowrap;
+      display: inline-flex; align-items: center; gap: 8px; padding: 11px 22px;
+      border-radius: 10px; font-weight: 700; cursor: pointer;
+      transition: all 0.25s; border: none; font-size: 14px; white-space: nowrap;
     }
     .pb-btn:active { transform: scale(0.97); }
-
-    .pb-btn-primary {
-      background: linear-gradient(135deg, var(--pb-accent), var(--pb-accent-dim));
-      color: #fff;
-    }
+    .pb-btn-primary { background: linear-gradient(135deg, var(--pb-accent), var(--pb-accent-dim)); color: #fff; }
     .pb-btn-primary:hover { filter: brightness(1.1); box-shadow: 0 4px 16px rgba(168,85,247,0.4); }
-
-    .pb-btn-cyan {
-      background: linear-gradient(135deg, #06b6d4, #0891b2);
-      color: #fff;
-    }
+    .pb-btn-cyan { background: linear-gradient(135deg, #06b6d4, #0891b2); color: #fff; }
     .pb-btn-cyan:hover { filter: brightness(1.1); }
-
-    .pb-btn-ghost {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--gray);
-    }
+    .pb-btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--gray); }
     .pb-btn-ghost:hover { border-color: var(--pb-accent); color: var(--pb-accent); }
-
-    .pb-btn-success {
-      background: linear-gradient(135deg, var(--success), #009966);
-      color: #fff;
-    }
+    .pb-btn-success { background: linear-gradient(135deg, var(--success), #009966); color: #fff; }
     .pb-btn-sm { padding: 8px 16px; font-size: 12px; }
 
-    /* Nav row */
-    .pb-nav-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-top: 24px;
-      flex-wrap: wrap;
-    }
+    /* NAV ROW */
+    .pb-nav-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
     .pb-nav-row-left { display: flex; gap: 8px; }
     .pb-nav-row-right { display: flex; gap: 8px; }
 
-    /* ── Preview Box ── */
-    .pb-preview-box {
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid rgba(168, 85, 247, 0.3);
-      border-radius: 12px;
-      padding: 18px;
-      font-size: 13px;
-      line-height: 1.85;
-      color: #e2e8f0;
-      white-space: pre-wrap;
-      max-height: 380px;
-      overflow-y: auto;
-      font-family: 'Courier New', monospace;
-      letter-spacing: 0.1px;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(168,85,247,0.4) transparent;
-    }
-    .pb-preview-box::-webkit-scrollbar { width: 5px; }
-    .pb-preview-box::-webkit-scrollbar-track { background: transparent; }
-    .pb-preview-box::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.4); border-radius: 3px; }
-
+    /* PROMPT PREVIEW */
     .pb-preview-empty {
-      text-align: center;
-      padding: 40px 20px;
-      color: #555;
-      border: 1px dashed rgba(168, 85, 247, 0.25);
-      border-radius: 10px;
-      font-size: 13px;
+      text-align: center; padding: 40px 20px; color: #555;
+      border: 1px dashed rgba(168,85,247,0.25); border-radius: 10px; font-size: 13px;
     }
-    .pb-preview-empty i {
-      font-size: 28px;
-      color: #7c3aed;
-      display: block;
-      margin-bottom: 10px;
-    }
+    .pb-preview-empty i { font-size: 28px; color: #7c3aed; display: block; margin-bottom: 10px; }
 
-    /* ── Prompt list ── */
     .pb-prompt-item {
-      background: rgba(0, 0, 0, 0.35);
-      border: 1px solid rgba(168, 85, 247, 0.2);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 12px;
-      position: relative;
+      background: rgba(0,0,0,0.35); border: 1px solid rgba(168,85,247,0.2);
+      border-radius: 12px; padding: 16px; margin-bottom: 12px; position: relative;
     }
-    .pb-prompt-item-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 10px;
-      gap: 8px;
-    }
-    .pb-prompt-item-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--pb-accent);
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
+    .pb-prompt-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 8px; }
+    .pb-prompt-item-label { font-size: 11px; font-weight: 700; color: var(--pb-accent); letter-spacing: 1px; text-transform: uppercase; }
     .pb-prompt-item-actions { display: flex; gap: 6px; }
-    .pb-prompt-text {
-      font-size: 12px;
-      line-height: 1.75;
-      color: #cbd5e1;
-      white-space: pre-wrap;
-      font-family: 'Courier New', monospace;
-    }
+    .pb-prompt-text { font-size: 12px; line-height: 1.75; color: #cbd5e1; white-space: pre-wrap; font-family: 'Courier New', monospace; }
 
-    /* ── Validation Error ── */
+    /* PROMPT LANG BADGE */
+    .pb-prompt-lang-badge {
+      display: inline-flex; align-items: center; gap: 5px; font-size: 10px;
+      padding: 2px 8px; border-radius: 10px; font-weight: 700; margin-left: 8px;
+    }
+    .pb-prompt-lang-badge.en { color: #00d9ff; background: rgba(0,217,255,0.1); border: 1px solid rgba(0,217,255,0.25); }
+    .pb-prompt-lang-badge.pt { color: #a855f7; background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.25); }
+
+    /* ERROR / VALIDATION */
     .pb-error-msg {
-      background: rgba(255, 51, 102, 0.1);
-      border: 1px solid rgba(255, 51, 102, 0.3);
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 12.5px;
-      color: #ff7799;
-      display: none;
-      align-items: center;
-      gap: 8px;
-      margin-top: 12px;
+      background: rgba(255,51,102,0.1); border: 1px solid rgba(255,51,102,0.3);
+      border-radius: 8px; padding: 10px 14px; font-size: 12.5px; color: #ff7799;
+      display: none; align-items: center; gap: 8px; margin-top: 12px;
     }
     .pb-error-msg.show { display: flex; }
 
-    /* ── Success Flash ── */
-    .pb-copy-flash {
-      display: none;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--pb-accent);
-      justify-content: center;
-      margin-top: 8px;
-    }
+    .pb-copy-flash { display: none; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--pb-accent); justify-content: center; margin-top: 8px; }
     .pb-copy-flash.show { display: flex; animation: pb-fadein 0.3s ease; }
 
-    /* ── Templates ── */
-    .pb-template-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 12px;
-      margin-top: 8px;
-    }
-    .pb-template-card {
-      background: rgba(15, 12, 30, 0.7);
-      border: 1px solid rgba(148, 163, 184, 0.15);
-      border-radius: 12px;
-      padding: 14px;
-      cursor: pointer;
-      transition: all 0.2s;
-      position: relative;
-    }
-    .pb-template-card:hover {
-      border-color: var(--pb-accent);
-      background: rgba(124, 58, 237, 0.08);
-    }
-    .pb-template-card .name {
-      font-weight: 700;
-      font-size: 13px;
-      color: #e9d5ff;
-      margin-bottom: 4px;
-    }
-    .pb-template-card .meta {
-      font-size: 11px;
-      color: var(--gray);
-    }
-    .pb-template-delete {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      background: transparent;
-      border: none;
-      color: rgba(255, 51, 102, 0.5);
-      cursor: pointer;
-      font-size: 11px;
-      padding: 2px 4px;
-      border-radius: 4px;
-      transition: color 0.2s;
-    }
+    /* TEMPLATES */
+    .pb-template-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 8px; }
+    .pb-template-card { background: rgba(15,12,30,0.7); border: 1px solid rgba(148,163,184,0.15); border-radius: 12px; padding: 14px; cursor: pointer; transition: all 0.2s; position: relative; }
+    .pb-template-card:hover { border-color: var(--pb-accent); background: rgba(124,58,237,0.08); }
+    .pb-template-card .name { font-weight: 700; font-size: 13px; color: #e9d5ff; margin-bottom: 4px; }
+    .pb-template-card .meta { font-size: 11px; color: var(--gray); }
+    .pb-template-delete { position: absolute; top: 8px; right: 8px; background: transparent; border: none; color: rgba(255,51,102,0.5); cursor: pointer; font-size: 11px; padding: 2px 4px; border-radius: 4px; transition: color 0.2s; }
     .pb-template-delete:hover { color: var(--danger); }
-
-    .pb-empty-state {
-      text-align: center;
-      padding: 32px;
-      color: var(--gray);
-      font-size: 13px;
-    }
+    .pb-empty-state { text-align: center; padding: 32px; color: var(--gray); font-size: 13px; }
     .pb-empty-state i { font-size: 26px; display: block; margin-bottom: 10px; opacity: 0.4; }
 
-    /* ── Realtime preview strip ── */
-    .pb-live-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 10.5px;
-      color: var(--success);
-      background: rgba(0,204,136,0.1);
-      border: 1px solid rgba(0,204,136,0.25);
-      border-radius: 20px;
-      padding: 3px 9px;
-      font-weight: 700;
-    }
-    .pb-live-dot {
-      width: 6px;
-      height: 6px;
-      background: var(--success);
-      border-radius: 50%;
-      animation: pb-pulse 2s infinite;
-    }
-    @keyframes pb-pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
+    /* LIVE BADGE */
+    .pb-live-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--success); background: rgba(0,204,136,0.1); border: 1px solid rgba(0,204,136,0.25); border-radius: 20px; padding: 3px 9px; font-weight: 700; }
+    .pb-live-dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; animation: pb-pulse 2s infinite; }
+    @keyframes pb-pulse { 0%, 100% { opacity:1; } 50% { opacity:0.3; } }
 
-    /* ── Progress bar ── */
-    .pb-progress-bar-wrap {
-      height: 3px;
-      background: rgba(148,163,184,0.1);
-      border-radius: 3px;
-      margin-bottom: 24px;
-      overflow: hidden;
-    }
-    .pb-progress-bar {
-      height: 100%;
-      background: linear-gradient(90deg, var(--pb-accent-dim), var(--pb-accent), #e879f9);
-      border-radius: 3px;
-      transition: width 0.4s ease;
-    }
+    /* PROGRESS */
+    .pb-progress-bar-wrap { height: 3px; background: rgba(148,163,184,0.1); border-radius: 3px; margin-bottom: 24px; overflow: hidden; }
+    .pb-progress-bar { height: 100%; background: linear-gradient(90deg, var(--pb-accent-dim), var(--pb-accent), #e879f9); border-radius: 3px; transition: width 0.4s ease; }
 
-    /* ── Save template modal ── */
-    .pb-modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(4px);
-      z-index: 9999;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
+    /* MODAL */
+    .pb-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px; }
     .pb-modal-overlay.show { display: flex; }
-    .pb-modal-box {
-      background: #12121a;
-      border: 1px solid rgba(168,85,247,0.4);
-      border-radius: 16px;
-      padding: 28px;
-      width: 100%;
-      max-width: 380px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-    }
-    .pb-modal-box h3 {
-      color: var(--pb-accent);
-      font-size: 16px;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .pb-modal-input {
-      width: 100%;
-      padding: 12px 14px;
-      background: rgba(0,0,0,0.4);
-      border: 1px solid rgba(148,163,184,0.2);
-      border-radius: 8px;
-      color: var(--light);
-      font-size: 14px;
-      margin-bottom: 16px;
-      transition: border-color 0.2s;
-    }
+    .pb-modal-box { background: #12121a; border: 1px solid rgba(168,85,247,0.4); border-radius: 16px; padding: 28px; width: 100%; max-width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+    .pb-modal-box h3 { color: var(--pb-accent); font-size: 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .pb-modal-input { width: 100%; padding: 12px 14px; background: rgba(0,0,0,0.4); border: 1px solid rgba(148,163,184,0.2); border-radius: 8px; color: var(--light); font-size: 14px; margin-bottom: 16px; transition: border-color 0.2s; box-sizing: border-box; }
     .pb-modal-input:focus { outline: none; border-color: var(--pb-accent); }
     .pb-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+    /* LENS/TECH FIELD */
+    .pb-tech-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    @media(max-width:600px) { .pb-tech-row { grid-template-columns: 1fr; } }
+    .pb-tech-select {
+      background: rgba(10,10,15,0.6); border: 1px solid rgba(100,100,150,0.3);
+      border-radius: 8px; color: #f0f0f5; font-size: 13px; padding: 9px 12px;
+      width: 100%; transition: border-color 0.2s; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238888a0'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px;
+    }
+    .pb-tech-select:focus { outline: none; border-color: var(--pb-accent); }
+    .pb-tech-label { font-size: 11px; color: #6d7a9a; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+
+    /* RESTRICTIONS PREVIEW */
+    .pb-restrictions-preview {
+      background: rgba(255,51,102,0.06); border: 1px solid rgba(255,51,102,0.2);
+      border-radius: 10px; padding: 14px 16px; margin-top: 16px;
+    }
+    .pb-restrictions-preview-title { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #ff7799; font-weight: 700; margin-bottom: 10px; }
+    .pb-restriction-tag {
+      display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px;
+      background: rgba(255,51,102,0.1); border: 1px solid rgba(255,51,102,0.2);
+      border-radius: 20px; font-size: 11.5px; color: #fca5a5; margin: 3px; font-weight: 600;
+    }
   </style>
 </head>
 <body>
-
-<!-- ══════════════════════════════════════════════════════════════
-     IA PROJECT — CRIADOR DE PROMPTS (Módulo refatorado)
-     Para integrar ao sistema: substituir o conteúdo de #ia-tab-prompt
-     por este bloco, e incluir o <script> abaixo antes de </body>
-══════════════════════════════════════════════════════════════ -->
 
 <div id="pb-root">
 
   <!-- HEADER -->
   <div class="pb-header">
     <div class="pb-header-left">
-      <h2><i class="fas fa-wand-sparkles"></i> Criador de Prompts — Ensaio IA</h2>
-      <p>Siga os passos abaixo para gerar prompts fotorrealistas personalizados.</p>
+      <h2>
+        <i class="fas fa-wand-sparkles"></i>
+        Criador de Prompts — Ensaio IA
+        <span class="pb-version-badge">v3.0</span>
+      </h2>
+      <p>Gera prompts profissionais em inglês • Identity Lock • Nível hiper-realista</p>
     </div>
     <div class="pb-header-actions">
       <button class="pb-btn pb-btn-ghost pb-btn-sm" onclick="PBController.loadTemplates()" title="Templates salvos">
@@ -680,7 +365,7 @@
 
   <!-- PROGRESS BAR -->
   <div class="pb-progress-bar-wrap">
-    <div class="pb-progress-bar" id="pb-progress" style="width:20%"></div>
+    <div class="pb-progress-bar" id="pb-progress" style="width:16.66%"></div>
   </div>
 
   <!-- STEP INDICATOR -->
@@ -706,52 +391,74 @@
     </div>
     <div class="pb-step-line"></div>
     <div class="pb-step-item" data-step="5" data-state="idle" onclick="PBController.goToStep(5)">
+      <div class="pb-step-circle">5</div>
+      <span class="pb-step-label">Técnico</span>
+    </div>
+    <div class="pb-step-line"></div>
+    <div class="pb-step-item" data-step="6" data-state="idle" onclick="PBController.goToStep(6)">
       <div class="pb-step-circle"><i class="fas fa-eye" style="font-size:12px;"></i></div>
       <span class="pb-step-label">Preview</span>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════
-       STEP 1 — CONTEXTO PROFISSIONAL
-  ═══════════════════════════════════════ -->
+  <!-- ═══ STEP 1 — CONTEXTO PROFISSIONAL ═══ -->
   <div id="pb-step-1" class="pb-step-panel active">
+
+    <!-- PRESET QUICK-PICK BAR -->
+    <div class="pb-presets-bar">
+      <span class="pb-presets-bar-label"><i class="fas fa-bolt"></i> Presets Rápidos:</span>
+      <div class="pb-presets-chips-row" id="pb-presets-chips-row">
+        <button class="pb-preset-quick" onclick="PBController.applyPreset('psicologa')" title="Psicóloga em Consultório">🧠 Psicóloga</button>
+        <button class="pb-preset-quick" onclick="PBController.applyPreset('coach')" title="Coach / Mentora">🎯 Coach</button>
+        <button class="pb-preset-quick" onclick="PBController.applyPreset('advogada')" title="Advogada Corporativa">⚖️ Advogada</button>
+        <button class="pb-preset-quick" onclick="PBController.applyPreset('medica')" title="Médica / Clínica">🩺 Médica</button>
+        <button class="pb-preset-quick" onclick="PBController.applyPreset('nutricionista')" title="Nutricionista Lifestyle">🥑 Nutricionista</button>
+        <button class="pb-preset-quick" onclick="PBController.applyPreset('makeup')" title="Makeup Artist / Beauty">💄 Makeup Artist</button>
+        <button class="pb-preset-quick" onclick="PBController.applyPreset('hairstylist')" title="Hair Stylist">💇 Hair Stylist</button>
+        <button class="pb-preset-quick" onclick="PBController.applyPreset('empreendedora')" title="Empreendedora / CEO">👑 CEO</button>
+        <button class="pb-preset-quick" onclick="PBController.applyPreset('lifestyle')" title="Lifestyle / Conteúdo">📱 Lifestyle</button>
+        <button class="pb-preset-quick" onclick="PBController.applyPreset('editorial')" title="Editorial / Moda">✨ Editorial</button>
+      </div>
+    </div>
+
     <div class="pb-card accent-border">
       <div class="pb-section-title"><i class="fas fa-briefcase"></i> Contexto Profissional</div>
-      <p class="pb-section-desc">Qual é o contexto de atuação da modelo? Selecione até 3 opções (opcional).</p>
+      <p class="pb-section-desc">Qual é o contexto de atuação? Selecione até 3 opções (opcional).</p>
+
+      <!-- LANGUAGE TOGGLE -->
+      <div class="pb-lang-toggle">
+        <span><i class="fas fa-language"></i> Idioma do Prompt:</span>
+        <label><input type="radio" name="pb-lang" class="pb-lang-radio" value="en" checked> <span class="pb-lang-en">🇺🇸 English (recomendado — mais realismo)</span></label>
+        <label><input type="radio" name="pb-lang" class="pb-lang-radio" value="pt"> <span class="pb-lang-pt">🇧🇷 Português</span></label>
+      </div>
 
       <div class="pb-field">
         <div class="pb-field-header">
-          <span class="pb-field-label">
-            Área de Atuação
-            <span class="opt">(opcional)</span>
-          </span>
+          <span class="pb-field-label">Área de Atuação <span class="opt">(opcional)</span></span>
           <div class="pb-field-meta">
             <span class="pb-counter" id="pb-count-profissao">0 / 3</span>
-            <div class="pb-tooltip-btn">
-              ?
-              <div class="pb-tooltip-text">O contexto profissional aparece no início do prompt para guiar a IA no estilo visual do ensaio.</div>
-            </div>
+            <div class="pb-tooltip-btn">?<div class="pb-tooltip-text">Define o contexto no topo do prompt — guia a IA no estilo visual do ensaio.</div></div>
           </div>
         </div>
         <div class="pb-chips" id="pb-chips-profissao">
           <span class="pb-chips-section">Beleza &amp; Estética</span>
-          <div class="pb-chip" data-field="profissao" data-value="hair stylist / cabeleireira" onclick="PBState.toggle(this)">Hair Stylist / Cabeleireira</div>
-          <div class="pb-chip" data-field="profissao" data-value="nail designer / manicure" onclick="PBState.toggle(this)">Nail Designer / Manicure</div>
+          <div class="pb-chip" data-field="profissao" data-value="hair stylist / hairdresser" onclick="PBState.toggle(this)">Hair Stylist</div>
+          <div class="pb-chip" data-field="profissao" data-value="nail designer / manicurist" onclick="PBState.toggle(this)">Nail Designer</div>
           <div class="pb-chip" data-field="profissao" data-value="lash designer" onclick="PBState.toggle(this)">Lash Designer</div>
-          <div class="pb-chip" data-field="profissao" data-value="maquiadora / makeup artist" onclick="PBState.toggle(this)">Maquiadora / Makeup Artist</div>
-          <div class="pb-chip" data-field="profissao" data-value="esteticista / skincare" onclick="PBState.toggle(this)">Esteticista / Skincare</div>
+          <div class="pb-chip" data-field="profissao" data-value="makeup artist / beauty professional" onclick="PBState.toggle(this)">Makeup Artist</div>
+          <div class="pb-chip" data-field="profissao" data-value="esthetician / skincare specialist" onclick="PBState.toggle(this)">Esteticista / Skincare</div>
           <span class="pb-chips-section">Saúde &amp; Bem-Estar</span>
-          <div class="pb-chip" data-field="profissao" data-value="psicóloga / terapeuta" onclick="PBState.toggle(this)">Psicóloga / Terapeuta</div>
-          <div class="pb-chip" data-field="profissao" data-value="médica / clínica" onclick="PBState.toggle(this)">Médica / Clínica</div>
-          <div class="pb-chip" data-field="profissao" data-value="nutricionista" onclick="PBState.toggle(this)">Nutricionista</div>
-          <div class="pb-chip" data-field="profissao" data-value="personal trainer / coach fitness" onclick="PBState.toggle(this)">Personal Trainer</div>
+          <div class="pb-chip" data-field="profissao" data-value="licensed psychologist / therapist" onclick="PBState.toggle(this)">Psicóloga / Terapeuta</div>
+          <div class="pb-chip" data-field="profissao" data-value="physician / medical professional" onclick="PBState.toggle(this)">Médica / Clínica</div>
+          <div class="pb-chip" data-field="profissao" data-value="nutritionist / dietitian" onclick="PBState.toggle(this)">Nutricionista</div>
+          <div class="pb-chip" data-field="profissao" data-value="personal trainer / fitness coach" onclick="PBState.toggle(this)">Personal Trainer</div>
           <span class="pb-chips-section">Negócios &amp; Serviços</span>
-          <div class="pb-chip" data-field="profissao" data-value="advogada / jurídico" onclick="PBState.toggle(this)">Advogada / Jurídico</div>
-          <div class="pb-chip" data-field="profissao" data-value="coach / mentora de negócios" onclick="PBState.toggle(this)">Coach / Mentora</div>
-          <div class="pb-chip" data-field="profissao" data-value="criadora de conteúdo / influencer" onclick="PBState.toggle(this)">Criadora de Conteúdo / Influencer</div>
-          <div class="pb-chip" data-field="profissao" data-value="empreendedora / empresária" onclick="PBState.toggle(this)">Empreendedora / Empresária</div>
-          <div class="pb-chip" data-field="profissao" data-value="professora / educadora" onclick="PBState.toggle(this)">Professora / Educadora</div>
-          <div class="pb-chip" data-field="profissao" data-value="arquiteta / designer de interiores" onclick="PBState.toggle(this)">Arquiteta / Designer de Interiores</div>
+          <div class="pb-chip" data-field="profissao" data-value="attorney / legal professional" onclick="PBState.toggle(this)">Advogada / Jurídico</div>
+          <div class="pb-chip" data-field="profissao" data-value="business coach / mentor" onclick="PBState.toggle(this)">Coach / Mentora</div>
+          <div class="pb-chip" data-field="profissao" data-value="content creator / influencer" onclick="PBState.toggle(this)">Criadora de Conteúdo</div>
+          <div class="pb-chip" data-field="profissao" data-value="entrepreneur / business owner" onclick="PBState.toggle(this)">Empreendedora</div>
+          <div class="pb-chip" data-field="profissao" data-value="teacher / educator" onclick="PBState.toggle(this)">Professora / Educadora</div>
+          <div class="pb-chip" data-field="profissao" data-value="architect / interior designer" onclick="PBState.toggle(this)">Arquiteta / Designer</div>
         </div>
         <div class="pb-limit-msg" id="pb-limit-profissao">⚠️ Máximo de 3 seleções atingido.</div>
       </div>
@@ -760,58 +467,50 @@
     <div class="pb-nav-row">
       <div class="pb-nav-row-left"></div>
       <div class="pb-nav-row-right">
-        <button class="pb-btn pb-btn-primary" onclick="PBController.nextStep()">
-          Próximo <i class="fas fa-arrow-right"></i>
-        </button>
+        <button class="pb-btn pb-btn-primary" onclick="PBController.nextStep()">Próximo <i class="fas fa-arrow-right"></i></button>
       </div>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════
-       STEP 2 — VISUAL (Look + Cabelo)
-  ═══════════════════════════════════════ -->
+  <!-- ═══ STEP 2 — VISUAL (Look + Cabelo) ═══ -->
   <div id="pb-step-2" class="pb-step-panel">
     <div class="pb-card accent-border">
       <div class="pb-section-title"><i class="fas fa-shirt"></i> Look &amp; Cabelo</div>
-      <p class="pb-section-desc">Defina o visual da modelo — roupa, estilo e cabelo.</p>
+      <p class="pb-section-desc">Defina o visual — roupa, estilo e cabelo. O cabelo da foto de referência será protegido automaticamente.</p>
 
       <div class="pb-grid-2">
         <!-- Look -->
         <div class="pb-field">
           <div class="pb-field-header">
             <span class="pb-field-label">Look Completo <span class="req">*</span></span>
-            <div class="pb-field-meta">
-              <span class="pb-counter" id="pb-count-look">0 / 3</span>
-            </div>
+            <span class="pb-counter" id="pb-count-look">0 / 3</span>
           </div>
           <div class="pb-chips" id="pb-chips-look">
             <span class="pb-chips-section">Social &amp; Corporativo</span>
-            <div class="pb-chip" data-field="look" data-value="Camisa social branca com calça de alfaiataria slim" onclick="PBState.toggle(this)">Social clássico</div>
-            <div class="pb-chip" data-field="look" data-value="Terno feminino completo em cor escura ou cinza" onclick="PBState.toggle(this)">Terno feminino</div>
-            <div class="pb-chip" data-field="look" data-value="Blazer estruturado com calça pantalona e camisa" onclick="PBState.toggle(this)">Blazer executivo</div>
-            <div class="pb-chip" data-field="look" data-value="Vestido midi social em cores sólidas" onclick="PBState.toggle(this)">Vestido midi social</div>
+            <div class="pb-chip" data-field="look" data-value="white social blouse with tailored slim trousers" onclick="PBState.toggle(this)">Social clássico</div>
+            <div class="pb-chip" data-field="look" data-value="full feminine suit in dark or charcoal tone" onclick="PBState.toggle(this)">Terno feminino</div>
+            <div class="pb-chip" data-field="look" data-value="structured blazer with wide-leg trousers and blouse" onclick="PBState.toggle(this)">Blazer executivo</div>
+            <div class="pb-chip" data-field="look" data-value="social midi dress in solid neutral color" onclick="PBState.toggle(this)">Vestido midi social</div>
             <span class="pb-chips-section">Elegante &amp; Glam</span>
-            <div class="pb-chip" data-field="look" data-value="Vestido longo em tom champanhe, vinho ou verde esmeralda" onclick="PBState.toggle(this)">Vestido longo elegante</div>
-            <div class="pb-chip" data-field="look" data-value="Vestido com brilho sutil ou bordado fino" onclick="PBState.toggle(this)">Glam com brilho</div>
-            <div class="pb-chip" data-field="look" data-value="Conjunto de seda com blazer levemente sobreposto" onclick="PBState.toggle(this)">Conjunto de seda</div>
+            <div class="pb-chip" data-field="look" data-value="floor-length gown in champagne, burgundy or emerald green" onclick="PBState.toggle(this)">Vestido longo elegante</div>
+            <div class="pb-chip" data-field="look" data-value="dress with subtle shimmer or fine embroidery details" onclick="PBState.toggle(this)">Glam com brilho</div>
+            <div class="pb-chip" data-field="look" data-value="silk coordinate set (blouse + wide-leg trousers) in soft neutral tone (ivory, blush or dusty sage), with a lightly structured blazer loosely draped open. Fabric shows realistic silk sheen, natural drape and subtle wrinkles" onclick="PBState.toggle(this)">Conjunto de seda + blazer</div>
             <span class="pb-chips-section">Casual &amp; Lifestyle</span>
-            <div class="pb-chip" data-field="look" data-value="Jeans delavê com blusa básica e tênis branco" onclick="PBState.toggle(this)">Casual jeans</div>
-            <div class="pb-chip" data-field="look" data-value="Vestido floral leve midi com sandálias rasteiras" onclick="PBState.toggle(this)">Floral lifestyle</div>
-            <div class="pb-chip" data-field="look" data-value="Conjunto cropped de malha com saia midi rodada" onclick="PBState.toggle(this)">Cropped + saia midi</div>
+            <div class="pb-chip" data-field="look" data-value="light-wash jeans with basic blouse and white sneakers" onclick="PBState.toggle(this)">Casual jeans</div>
+            <div class="pb-chip" data-field="look" data-value="light floral midi dress with flat sandals" onclick="PBState.toggle(this)">Floral lifestyle</div>
+            <div class="pb-chip" data-field="look" data-value="ribbed crop top set with flowing midi skirt" onclick="PBState.toggle(this)">Cropped + saia midi</div>
             <span class="pb-chips-section">Editorial &amp; Fashion</span>
-            <div class="pb-chip" data-field="look" data-value="Vestido estruturado com decote marcante e cor vibrante" onclick="PBState.toggle(this)">Editorial vibrante</div>
-            <div class="pb-chip" data-field="look" data-value="Look todo preto com detalhes em couro e corte dramático" onclick="PBState.toggle(this)">All black dramático</div>
-            <div class="pb-chip" data-field="look" data-value="Blazer oversized xadrez com calça slim de cor contrastante" onclick="PBState.toggle(this)">Blazer xadrez ousado</div>
+            <div class="pb-chip" data-field="look" data-value="structured dress with statement neckline in a vibrant hue" onclick="PBState.toggle(this)">Editorial vibrante</div>
+            <div class="pb-chip" data-field="look" data-value="all-black look with leather details and dramatic cut" onclick="PBState.toggle(this)">All black dramático</div>
+            <div class="pb-chip" data-field="look" data-value="oversized plaid blazer with contrasting slim trousers" onclick="PBState.toggle(this)">Blazer xadrez ousado</div>
             <span class="pb-chips-section">Profissional (Saúde &amp; Estética)</span>
-            <div class="pb-chip" data-field="look" data-value="Jaleco branco clássico com roupa social por baixo" onclick="PBState.toggle(this)">Jaleco branco</div>
-            <div class="pb-chip" data-field="look" data-value="Avental estético clean em preto, branco ou cinza" onclick="PBState.toggle(this)">Avental estético</div>
-            <div class="pb-chip" data-field="look" data-value="Camisa polo com logotipo e calça lisa coordenada" onclick="PBState.toggle(this)">Uniforme polo</div>
+            <div class="pb-chip" data-field="look" data-value="classic white lab coat over social attire" onclick="PBState.toggle(this)">Jaleco branco</div>
+            <div class="pb-chip" data-field="look" data-value="clean aesthetic apron in black, white or gray" onclick="PBState.toggle(this)">Avental estético</div>
+            <div class="pb-chip" data-field="look" data-value="branded polo shirt with coordinated solid trousers" onclick="PBState.toggle(this)">Uniforme polo</div>
           </div>
-          <input type="text" class="pb-custom-input" id="pb-look-custom" placeholder="Descreva seu look personalizado…" oninput="PBState.updateCustom('look', this.value)">
+          <input type="text" class="pb-custom-input" id="pb-look-custom" placeholder="Descreva seu look personalizado (em inglês para melhor resultado)…" oninput="PBState.updateCustom('look', this.value)">
           <div style="margin-top:8px;">
-            <span class="pb-chip" style="font-size:12px;" onclick="PBUI.toggleCustomInput('pb-look-custom', this)">
-              <i class="fas fa-pen"></i> Personalizado
-            </span>
+            <span class="pb-chip" style="font-size:12px;" onclick="PBUI.toggleCustomInput('pb-look-custom', this)"><i class="fas fa-pen"></i> Personalizado</span>
           </div>
           <div class="pb-limit-msg" id="pb-limit-look">⚠️ Máximo de 3 seleções atingido.</div>
         </div>
@@ -822,22 +521,20 @@
             <span class="pb-field-label">Estilo do Cabelo <span class="req">*</span></span>
             <div class="pb-field-meta">
               <span class="pb-counter" id="pb-count-cabelo">0 / 1</span>
-              <div class="pb-tooltip-btn">
-                ?
-                <div class="pb-tooltip-text">Selecione 1 estilo. O prompt incluirá restrição automática para não alterar o cabelo da foto de referência.</div>
-              </div>
+              <div class="pb-tooltip-btn">?<div class="pb-tooltip-text">Descreve o cabelo para o prompt. A restrição "DO NOT ALTER HAIR" é adicionada automaticamente no bloco Identity Lock.</div></div>
             </div>
           </div>
           <div class="pb-chips" id="pb-chips-cabelo">
-            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="liso natural" onclick="PBState.toggle(this)">Liso natural</div>
-            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="liso com brilho intenso" onclick="PBState.toggle(this)">Liso brilhante</div>
-            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="ondulado leve e natural" onclick="PBState.toggle(this)">Ondulado leve</div>
-            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="ondulado volumoso e definido" onclick="PBState.toggle(this)">Ondulado volumoso</div>
-            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="cacheado definido e volumoso" onclick="PBState.toggle(this)">Cacheado definido</div>
-            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="crespo natural e volumoso" onclick="PBState.toggle(this)">Crespo natural</div>
-            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="preso em coque elegante" onclick="PBState.toggle(this)">Coque elegante</div>
-            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="semi-preso com mechas soltas" onclick="PBState.toggle(this)">Semi-preso</div>
-            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="trança lateral ou embutida" onclick="PBState.toggle(this)">Trança</div>
+            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="straight natural hair, smooth and glossy" onclick="PBState.toggle(this)">Liso natural</div>
+            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="straight hair with intense shine" onclick="PBState.toggle(this)">Liso brilhante</div>
+            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="light natural waves, effortless movement" onclick="PBState.toggle(this)">Ondulado leve</div>
+            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="voluminous defined waves with natural bounce — Bob cut with soft layering, realistic volume and authentic texture, no plastic effect" onclick="PBState.toggle(this)">Bob repicado ondulado</div>
+            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="voluminous wavy hair with rich definition" onclick="PBState.toggle(this)">Ondulado volumoso</div>
+            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="defined curly hair with full volume" onclick="PBState.toggle(this)">Cacheado definido</div>
+            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="natural coily hair with rich volume" onclick="PBState.toggle(this)">Crespo natural</div>
+            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="elegant updo bun, sleek and polished" onclick="PBState.toggle(this)">Coque elegante</div>
+            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="half-up style with loose face-framing strands" onclick="PBState.toggle(this)">Semi-preso</div>
+            <div class="pb-chip" data-field="cabelo" data-max="1" data-value="side braid or French braid" onclick="PBState.toggle(this)">Trança</div>
           </div>
           <div class="pb-limit-msg" id="pb-limit-cabelo">⚠️ Apenas 1 seleção permitida.</div>
         </div>
@@ -847,22 +544,16 @@
     </div>
 
     <div class="pb-nav-row">
-      <div class="pb-nav-row-left">
-        <button class="pb-btn pb-btn-ghost" onclick="PBController.prevStep()"><i class="fas fa-arrow-left"></i> Voltar</button>
-      </div>
-      <div class="pb-nav-row-right">
-        <button class="pb-btn pb-btn-primary" onclick="PBController.nextStep()">Próximo <i class="fas fa-arrow-right"></i></button>
-      </div>
+      <div class="pb-nav-row-left"><button class="pb-btn pb-btn-ghost" onclick="PBController.prevStep()"><i class="fas fa-arrow-left"></i> Voltar</button></div>
+      <div class="pb-nav-row-right"><button class="pb-btn pb-btn-primary" onclick="PBController.nextStep()">Próximo <i class="fas fa-arrow-right"></i></button></div>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════
-       STEP 3 — CENÁRIO & ILUMINAÇÃO
-  ═══════════════════════════════════════ -->
+  <!-- ═══ STEP 3 — CENÁRIO & ILUMINAÇÃO ═══ -->
   <div id="pb-step-3" class="pb-step-panel">
     <div class="pb-card accent-border">
       <div class="pb-section-title"><i class="fas fa-image"></i> Cenário, Ambiente &amp; Iluminação</div>
-      <p class="pb-section-desc">Onde e como a foto será tirada. Escolha até 3 ambientes e elementos de cena.</p>
+      <p class="pb-section-desc">Onde e como a foto será tirada.</p>
 
       <div class="pb-grid-2">
         <!-- Ambiente -->
@@ -873,43 +564,42 @@
           </div>
           <div class="pb-chips" id="pb-chips-ambiente">
             <span class="pb-chips-section">Interno</span>
-            <div class="pb-chip" data-field="ambiente" data-value="estúdio fotográfico profissional com fundo infinito branco" onclick="PBState.toggle(this)">Estúdio fundo branco</div>
-            <div class="pb-chip" data-field="ambiente" data-value="escritório moderno com design contemporâneo" onclick="PBState.toggle(this)">Escritório moderno</div>
-            <div class="pb-chip" data-field="ambiente" data-value="sala de estar elegante com decoração sofisticada" onclick="PBState.toggle(this)">Sala elegante</div>
-            <div class="pb-chip" data-field="ambiente" data-value="biblioteca ou acervo com estantes de livros ao fundo" onclick="PBState.toggle(this)">Biblioteca</div>
-            <div class="pb-chip" data-field="ambiente" data-value="clínica ou consultório moderno e clean" onclick="PBState.toggle(this)">Clínica / Consultório</div>
-            <div class="pb-chip" data-field="ambiente" data-value="salão de beleza moderno com espelhos e equipamentos" onclick="PBState.toggle(this)">Salão de beleza</div>
+            <div class="pb-chip" data-field="ambiente" data-value="professional photography studio with seamless white background" onclick="PBState.toggle(this)">Estúdio fundo branco</div>
+            <div class="pb-chip" data-field="ambiente" data-value="modern contemporary office with clean design" onclick="PBState.toggle(this)">Escritório moderno</div>
+            <div class="pb-chip" data-field="ambiente" data-value="elegant living room with sophisticated décor" onclick="PBState.toggle(this)">Sala elegante</div>
+            <div class="pb-chip" data-field="ambiente" data-value="library or reading room with bookshelves in background" onclick="PBState.toggle(this)">Biblioteca</div>
+            <div class="pb-chip" data-field="ambiente" data-value="warm welcoming psychology office — comfortable armchair, potted plants (monstera or ficus), modern ceramic vases, warm-toned walls and soft natural side window light" onclick="PBState.toggle(this)">Consultório psicologia</div>
+            <div class="pb-chip" data-field="ambiente" data-value="clean modern clinic or medical office" onclick="PBState.toggle(this)">Clínica / Consultório</div>
+            <div class="pb-chip" data-field="ambiente" data-value="modern beauty salon with mirrors and professional equipment" onclick="PBState.toggle(this)">Salão de beleza</div>
             <span class="pb-chips-section">Externo</span>
-            <div class="pb-chip" data-field="ambiente" data-value="jardim com flores e vegetação natural" onclick="PBState.toggle(this)">Jardim florido</div>
-            <div class="pb-chip" data-field="ambiente" data-value="varanda com vista urbana e luz do pôr do sol" onclick="PBState.toggle(this)">Varanda urbana</div>
-            <div class="pb-chip" data-field="ambiente" data-value="rua de cidade moderna com fachadas contemporâneas" onclick="PBState.toggle(this)">Rua urbana</div>
-            <div class="pb-chip" data-field="ambiente" data-value="café ou restaurante chique com decoração minimalista" onclick="PBState.toggle(this)">Café chique</div>
+            <div class="pb-chip" data-field="ambiente" data-value="garden with flowers and lush natural vegetation" onclick="PBState.toggle(this)">Jardim florido</div>
+            <div class="pb-chip" data-field="ambiente" data-value="urban balcony with city view and golden hour light" onclick="PBState.toggle(this)">Varanda urbana</div>
+            <div class="pb-chip" data-field="ambiente" data-value="modern city street with contemporary architecture" onclick="PBState.toggle(this)">Rua urbana</div>
+            <div class="pb-chip" data-field="ambiente" data-value="upscale café or restaurant with minimalist décor" onclick="PBState.toggle(this)">Café chique</div>
           </div>
           <input type="text" class="pb-custom-input" id="pb-ambiente-custom" placeholder="Descreva o cenário personalizado…" oninput="PBState.updateCustom('ambiente', this.value)">
-          <div style="margin-top:8px;">
-            <span class="pb-chip" style="font-size:12px;" onclick="PBUI.toggleCustomInput('pb-ambiente-custom', this)">
-              <i class="fas fa-pen"></i> Personalizado
-            </span>
-          </div>
+          <div style="margin-top:8px;"><span class="pb-chip" style="font-size:12px;" onclick="PBUI.toggleCustomInput('pb-ambiente-custom', this)"><i class="fas fa-pen"></i> Personalizado</span></div>
           <div class="pb-limit-msg" id="pb-limit-ambiente">⚠️ Máximo de 3 seleções atingido.</div>
         </div>
 
-        <!-- Detalhes do cenário -->
+        <!-- Detalhes -->
         <div class="pb-field">
           <div class="pb-field-header">
             <span class="pb-field-label">Elementos do Cenário <span class="req">*</span></span>
             <span class="pb-counter" id="pb-count-detalhes">0 / 3</span>
           </div>
           <div class="pb-chips" id="pb-chips-detalhes">
-            <div class="pb-chip" data-field="detalhes" data-value="plantas naturais e flores como decoração" onclick="PBState.toggle(this)">Plantas e flores</div>
-            <div class="pb-chip" data-field="detalhes" data-value="objetos de trabalho sutis ao fundo" onclick="PBState.toggle(this)">Props profissionais</div>
-            <div class="pb-chip" data-field="detalhes" data-value="mesa de trabalho organizada com notebook" onclick="PBState.toggle(this)">Mesa com notebook</div>
-            <div class="pb-chip" data-field="detalhes" data-value="livros e itens decorativos ao fundo" onclick="PBState.toggle(this)">Livros decorativos</div>
-            <div class="pb-chip" data-field="detalhes" data-value="fundo limpo e desfocado (bokeh suave)" onclick="PBState.toggle(this)">Bokeh suave</div>
-            <div class="pb-chip" data-field="detalhes" data-value="luz solar diagonal pelas janelas com sombras suaves" onclick="PBState.toggle(this)">Luz solar pela janela</div>
-            <div class="pb-chip" data-field="detalhes" data-value="elementos da natureza como galhos e folhagens" onclick="PBState.toggle(this)">Folhagens naturais</div>
-            <div class="pb-chip" data-field="detalhes" data-value="arquitetura contemporânea com linhas limpas" onclick="PBState.toggle(this)">Arquitetura clean</div>
-            <div class="pb-chip" data-field="detalhes" data-value="espelhos e reflexos sutis na composição" onclick="PBState.toggle(this)">Espelhos e reflexos</div>
+            <div class="pb-chip" data-field="detalhes" data-value="natural plants and flowers as décor elements" onclick="PBState.toggle(this)">Plantas e flores</div>
+            <div class="pb-chip" data-field="detalhes" data-value="subtle professional props in background" onclick="PBState.toggle(this)">Props profissionais</div>
+            <div class="pb-chip" data-field="detalhes" data-value="organized work desk with laptop" onclick="PBState.toggle(this)">Mesa com notebook</div>
+            <div class="pb-chip" data-field="detalhes" data-value="books and decorative objects in background" onclick="PBState.toggle(this)">Livros decorativos</div>
+            <div class="pb-chip" data-field="detalhes" data-value="shallow depth of field — background slightly out of focus" onclick="PBState.toggle(this)">Profundidade de campo rasa</div>
+          <div class="pb-chip" data-field="detalhes" data-value="clean out-of-focus background (soft bokeh)" onclick="PBState.toggle(this)">Bokeh suave</div>
+            <div class="pb-chip" data-field="detalhes" data-value="diagonal sunlight through windows casting soft shadows" onclick="PBState.toggle(this)">Luz solar pela janela</div>
+            <div class="pb-chip" data-field="detalhes" data-value="natural elements: branches and tropical foliage" onclick="PBState.toggle(this)">Folhagens naturais</div>
+            <div class="pb-chip" data-field="detalhes" data-value="contemporary architecture with clean lines" onclick="PBState.toggle(this)">Arquitetura clean</div>
+            <div class="pb-chip" data-field="detalhes" data-value="mirrors and subtle reflections in composition" onclick="PBState.toggle(this)">Espelhos e reflexos</div>
+            <div class="pb-chip" data-field="detalhes" data-value="modern ceramic vases and tasteful decorative objects" onclick="PBState.toggle(this)">Vasos modernos</div>
           </div>
           <div class="pb-limit-msg" id="pb-limit-detalhes">⚠️ Máximo de 3 seleções atingido.</div>
         </div>
@@ -921,18 +611,15 @@
           <span class="pb-field-label">Tipo de Iluminação <span class="req">*</span></span>
           <div class="pb-field-meta">
             <span class="pb-counter" id="pb-count-iluminacao">0 / 2</span>
-            <div class="pb-tooltip-btn">
-              ?
-              <div class="pb-tooltip-text">Define como a luz se comporta na cena — interna (artificial controlada) ou externa (luz natural).</div>
-            </div>
+            <div class="pb-tooltip-btn">?<div class="pb-tooltip-text">Define o comportamento da luz na cena.</div></div>
           </div>
         </div>
         <div class="pb-chips" id="pb-chips-iluminacao">
-          <div class="pb-chip active" data-field="iluminacao" data-max="2" data-value="AMBIENTE INTERNO com iluminação artificial controlada" onclick="PBState.toggle(this)">🏠 Interno</div>
-          <div class="pb-chip" data-field="iluminacao" data-max="2" data-value="AMBIENTE EXTERNO com luz natural" onclick="PBState.toggle(this)">🌤️ Externo</div>
-          <div class="pb-chip" data-field="iluminacao" data-max="2" data-value="MISTO — interno com luz natural de janela" onclick="PBState.toggle(this)">🪟 Misto (janela)</div>
-          <div class="pb-chip" data-field="iluminacao" data-max="2" data-value="ESTÚDIO com iluminação estroboscópica profissional" onclick="PBState.toggle(this)">💡 Estúdio profissional</div>
-          <div class="pb-chip" data-field="iluminacao" data-max="2" data-value="LUZ GOLDEN HOUR (pôr do sol dourado)" onclick="PBState.toggle(this)">🌅 Golden Hour</div>
+          <div class="pb-chip active" data-field="iluminacao" data-max="2" data-value="INTERIOR with controlled artificial lighting" onclick="PBState.toggle(this)">🏠 Interno</div>
+          <div class="pb-chip" data-field="iluminacao" data-max="2" data-value="EXTERIOR with natural ambient light" onclick="PBState.toggle(this)">🌤️ Externo</div>
+          <div class="pb-chip" data-field="iluminacao" data-max="2" data-value="MIXED — interior with soft natural window light" onclick="PBState.toggle(this)">🪟 Misto (janela)</div>
+          <div class="pb-chip" data-field="iluminacao" data-max="2" data-value="STUDIO with professional strobe lighting setup" onclick="PBState.toggle(this)">💡 Estúdio profissional</div>
+          <div class="pb-chip" data-field="iluminacao" data-max="2" data-value="GOLDEN HOUR — warm directional sunset light" onclick="PBState.toggle(this)">🌅 Golden Hour</div>
         </div>
         <div class="pb-limit-msg" id="pb-limit-iluminacao">⚠️ Máximo de 2 seleções atingido.</div>
       </div>
@@ -941,22 +628,16 @@
     </div>
 
     <div class="pb-nav-row">
-      <div class="pb-nav-row-left">
-        <button class="pb-btn pb-btn-ghost" onclick="PBController.prevStep()"><i class="fas fa-arrow-left"></i> Voltar</button>
-      </div>
-      <div class="pb-nav-row-right">
-        <button class="pb-btn pb-btn-primary" onclick="PBController.nextStep()">Próximo <i class="fas fa-arrow-right"></i></button>
-      </div>
+      <div class="pb-nav-row-left"><button class="pb-btn pb-btn-ghost" onclick="PBController.prevStep()"><i class="fas fa-arrow-left"></i> Voltar</button></div>
+      <div class="pb-nav-row-right"><button class="pb-btn pb-btn-primary" onclick="PBController.nextStep()">Próximo <i class="fas fa-arrow-right"></i></button></div>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════
-       STEP 4 — POSE, EXPRESSÃO & TÉCNICA
-  ═══════════════════════════════════════ -->
+  <!-- ═══ STEP 4 — POSE, EXPRESSÃO & REFERÊNCIA ═══ -->
   <div id="pb-step-4" class="pb-step-panel">
     <div class="pb-card accent-border">
-      <div class="pb-section-title"><i class="fas fa-person"></i> Pose, Expressão &amp; Nível Técnico</div>
-      <p class="pb-section-desc">Como a modelo se posiciona, qual expressão transmite, a referência visual e o nível de realismo desejado.</p>
+      <div class="pb-section-title"><i class="fas fa-person"></i> Pose, Expressão &amp; Referência Visual</div>
+      <p class="pb-section-desc">Como a modelo se posiciona e qual expressão transmite.</p>
 
       <div class="pb-grid-2">
         <!-- Pose -->
@@ -967,24 +648,21 @@
           </div>
           <div class="pb-chips" id="pb-chips-pose">
             <span class="pb-chips-section">Profissional</span>
-            <div class="pb-chip" data-field="pose" data-value="em pé, postura ereta e confiante, olhando para a câmera" onclick="PBState.toggle(this)">Em pé, confiante</div>
-            <div class="pb-chip" data-field="pose" data-value="sentada em cadeira executiva, postura relaxada e profissional" onclick="PBState.toggle(this)">Sentada, executiva</div>
-            <div class="pb-chip" data-field="pose" data-value="apoiada em mesa, postura descontraída e elegante" onclick="PBState.toggle(this)">Apoiada na mesa</div>
-            <div class="pb-chip" data-field="pose" data-value="cruzando os braços levemente, postura de autoridade" onclick="PBState.toggle(this)">Braços cruzados</div>
+            <div class="pb-chip" data-field="pose" data-value="standing upright, confident posture, direct eye contact with camera" onclick="PBState.toggle(this)">Em pé, confiante</div>
+            <div class="pb-chip" data-field="pose" data-value="seated in armchair, body slightly leaned forward in empathetic listening posture, shoulders relaxed, hands gently resting on lap" onclick="PBState.toggle(this)">Sentada empática (consultório)</div>
+            <div class="pb-chip" data-field="pose" data-value="seated in executive chair, relaxed and professional" onclick="PBState.toggle(this)">Sentada executiva</div>
+            <div class="pb-chip" data-field="pose" data-value="leaning against desk, casual yet elegant stance" onclick="PBState.toggle(this)">Apoiada na mesa</div>
+            <div class="pb-chip" data-field="pose" data-value="arms lightly crossed, posture of authority and presence" onclick="PBState.toggle(this)">Braços cruzados</div>
             <span class="pb-chips-section">Natural & Lifestyle</span>
-            <div class="pb-chip" data-field="pose" data-value="andando com leveza, movimento natural e dinâmico" onclick="PBState.toggle(this)">Andando, dinâmica</div>
-            <div class="pb-chip" data-field="pose" data-value="sorrindo enquanto olha para baixo com naturalidade" onclick="PBState.toggle(this)">Sorrindo olhar baixo</div>
-            <div class="pb-chip" data-field="pose" data-value="segurando objeto relevante com olhar focado" onclick="PBState.toggle(this)">Segurando objeto</div>
+            <div class="pb-chip" data-field="pose" data-value="walking with light natural movement, dynamic energy" onclick="PBState.toggle(this)">Andando, dinâmica</div>
+            <div class="pb-chip" data-field="pose" data-value="smiling while looking down naturally" onclick="PBState.toggle(this)">Sorrindo olhar baixo</div>
+            <div class="pb-chip" data-field="pose" data-value="holding relevant object with focused gaze" onclick="PBState.toggle(this)">Segurando objeto</div>
             <span class="pb-chips-section">Editorial</span>
-            <div class="pb-chip" data-field="pose" data-value="pose editorial com ângulo de câmera criativo e composição ousada" onclick="PBState.toggle(this)">Editorial criativo</div>
-            <div class="pb-chip" data-field="pose" data-value="olhando para o horizonte, perfil elegante" onclick="PBState.toggle(this)">Perfil — horizonte</div>
+            <div class="pb-chip" data-field="pose" data-value="editorial pose with creative camera angle and bold composition" onclick="PBState.toggle(this)">Editorial criativo</div>
+            <div class="pb-chip" data-field="pose" data-value="side profile, elegant gaze toward horizon" onclick="PBState.toggle(this)">Perfil — horizonte</div>
           </div>
           <input type="text" class="pb-custom-input" id="pb-pose-custom" placeholder="Descreva a pose personalizada…" oninput="PBState.updateCustom('pose', this.value)">
-          <div style="margin-top:8px;">
-            <span class="pb-chip" style="font-size:12px;" onclick="PBUI.toggleCustomInput('pb-pose-custom', this)">
-              <i class="fas fa-pen"></i> Personalizado
-            </span>
-          </div>
+          <div style="margin-top:8px;"><span class="pb-chip" style="font-size:12px;" onclick="PBUI.toggleCustomInput('pb-pose-custom', this)"><i class="fas fa-pen"></i> Personalizado</span></div>
           <div class="pb-limit-msg" id="pb-limit-pose">⚠️ Máximo de 3 seleções atingido.</div>
         </div>
 
@@ -995,57 +673,134 @@
             <span class="pb-counter" id="pb-count-expressao">0 / 2</span>
           </div>
           <div class="pb-chips" id="pb-chips-expressao">
-            <div class="pb-chip" data-field="expressao" data-max="2" data-value="expressão serena, confiante e profissional" onclick="PBState.toggle(this)">Serena e profissional</div>
-            <div class="pb-chip" data-field="expressao" data-max="2" data-value="sorriso amplo, energia positiva e vibrante" onclick="PBState.toggle(this)">Sorriso amplo</div>
-            <div class="pb-chip" data-field="expressao" data-max="2" data-value="expressão pensativa, olhar inteligente e reflexivo" onclick="PBState.toggle(this)">Pensativa e reflexiva</div>
-            <div class="pb-chip" data-field="expressao" data-max="2" data-value="expressão de autoridade, olhar direto e determinado" onclick="PBState.toggle(this)">Autoridade</div>
-            <div class="pb-chip" data-field="expressao" data-max="2" data-value="expressão suave, olhar gentil e empático" onclick="PBState.toggle(this)">Suave e empática</div>
-            <div class="pb-chip" data-field="expressao" data-max="2" data-value="expressão editorial intensa, olhar marcante" onclick="PBState.toggle(this)">Editorial intensa</div>
+            <div class="pb-chip" data-field="expressao" data-max="2" data-value="serene, confident and professional expression" onclick="PBState.toggle(this)">Serena e profissional</div>
+            <div class="pb-chip" data-field="expressao" data-max="2" data-value="warm natural smile — not exaggerated, eyes soft and expressive, conveying approachability and confidence" onclick="PBState.toggle(this)">Sorriso natural acolhedor</div>
+            <div class="pb-chip" data-field="expressao" data-max="2" data-value="broad warm smile, vibrant and positive energy" onclick="PBState.toggle(this)">Sorriso amplo</div>
+            <div class="pb-chip" data-field="expressao" data-max="2" data-value="thoughtful expression, intelligent and reflective gaze" onclick="PBState.toggle(this)">Pensativa e reflexiva</div>
+            <div class="pb-chip" data-field="expressao" data-max="2" data-value="authoritative expression, direct and determined gaze" onclick="PBState.toggle(this)">Autoridade</div>
+            <div class="pb-chip" data-field="expressao" data-max="2" data-value="gentle expression, kind and empathetic gaze" onclick="PBState.toggle(this)">Suave e empática</div>
+            <div class="pb-chip" data-field="expressao" data-max="2" data-value="intense editorial expression, striking and memorable gaze" onclick="PBState.toggle(this)">Editorial intensa</div>
           </div>
           <div class="pb-limit-msg" id="pb-limit-expressao">⚠️ Máximo de 2 seleções atingido.</div>
         </div>
       </div>
 
-      <div class="pb-grid-2">
-        <!-- Referência Visual -->
-        <div class="pb-field">
-          <div class="pb-field-header">
-            <span class="pb-field-label">Referência Visual <span class="req">*</span></span>
-            <span class="pb-counter" id="pb-count-refvisual">0 / 2</span>
-          </div>
-          <div class="pb-chips" id="pb-chips-refvisual">
-            <div class="pb-chip" data-field="refvisual" data-max="2" data-value="Editorial Vogue, luz suave dourada, fundo escuro texturizado" onclick="PBState.toggle(this)">Editorial Vogue</div>
-            <div class="pb-chip" data-field="refvisual" data-max="2" data-value="Fotografia beauty glam, lente 105mm macro, pele iluminada" onclick="PBState.toggle(this)">Beauty Glam</div>
-            <div class="pb-chip" data-field="refvisual" data-max="2" data-value="Branding pessoal moderno, composição limpa, luz natural suave" onclick="PBState.toggle(this)">Branding Pessoal</div>
-            <div class="pb-chip" data-field="refvisual" data-max="2" data-value="Retrato corporativo premium, iluminação de estúdio, fundo neutro" onclick="PBState.toggle(this)">Corporativo Premium</div>
-            <div class="pb-chip" data-field="refvisual" data-max="2" data-value="Lifestyle editorial, luz natural ambiente, autêntico" onclick="PBState.toggle(this)">Lifestyle Editorial</div>
-            <div class="pb-chip" data-field="refvisual" data-max="2" data-value="Fotografia fashion contemporânea, ângulo criativo, composição ousada" onclick="PBState.toggle(this)">Fashion Contemporâneo</div>
-          </div>
-          <div class="pb-limit-msg" id="pb-limit-refvisual">⚠️ Máximo de 2 seleções atingido.</div>
+      <!-- Referência Visual -->
+      <div class="pb-field">
+        <div class="pb-field-header">
+          <span class="pb-field-label">Referência Visual <span class="req">*</span></span>
+          <span class="pb-counter" id="pb-count-refvisual">0 / 2</span>
         </div>
-
-        <!-- Nível Técnico -->
-        <div class="pb-field">
-          <div class="pb-field-header">
-            <span class="pb-field-label">Nível Técnico <span class="req">*</span></span>
-            <span class="pb-counter" id="pb-count-realismo">0 / 1</span>
-          </div>
-          <div class="pb-chips" id="pb-chips-realismo">
-            <div class="pb-chip" data-field="realismo" data-max="1" data-value="Hiper-realista (máximo detalhe fotográfico, textura de pele autêntica, resolução ultra alta)" onclick="PBState.toggle(this)">Hiper-realista</div>
-            <div class="pb-chip active" data-field="realismo" data-max="1" data-value="Fotorrealista profissional (qualidade DSLR, iluminação cinematográfica)" onclick="PBState.toggle(this)">Fotorrealista profissional</div>
-            <div class="pb-chip" data-field="realismo" data-max="1" data-value="Realista com leve pós-produção editorial (contraste suave, cores equilibradas)" onclick="PBState.toggle(this)">Realista + editorial</div>
-          </div>
-          <div class="pb-limit-msg" id="pb-limit-realismo">⚠️ Apenas 1 seleção permitida.</div>
+        <div class="pb-chips" id="pb-chips-refvisual">
+          <div class="pb-chip" data-field="refvisual" data-max="2" data-value="Artistic portrait — 85mm f/1.8 lens, Rembrandt lighting, textured background, shallow depth of field" onclick="PBState.toggle(this)">Retrato Artístico 85mm</div>
+          <div class="pb-chip" data-field="refvisual" data-max="2" data-value="Editorial Vogue style — soft golden light, dark textured background" onclick="PBState.toggle(this)">Editorial Vogue</div>
+          <div class="pb-chip" data-field="refvisual" data-max="2" data-value="Beauty glam photography — 105mm macro lens, luminous skin" onclick="PBState.toggle(this)">Beauty Glam 105mm</div>
+          <div class="pb-chip" data-field="refvisual" data-max="2" data-value="Personal branding photography — clean composition, soft natural light" onclick="PBState.toggle(this)">Branding Pessoal</div>
+          <div class="pb-chip" data-field="refvisual" data-max="2" data-value="Premium corporate portrait — studio lighting, neutral background" onclick="PBState.toggle(this)">Corporativo Premium</div>
+          <div class="pb-chip" data-field="refvisual" data-max="2" data-value="Lifestyle editorial — ambient natural light, authentic feel" onclick="PBState.toggle(this)">Lifestyle Editorial</div>
+          <div class="pb-chip" data-field="refvisual" data-max="2" data-value="Contemporary fashion photography — creative angle, bold composition" onclick="PBState.toggle(this)">Fashion Contemporâneo</div>
         </div>
+        <div class="pb-limit-msg" id="pb-limit-refvisual">⚠️ Máximo de 2 seleções atingido.</div>
       </div>
 
       <div class="pb-error-msg" id="pb-err-4"><i class="fas fa-exclamation-circle"></i> <span id="pb-err-4-text"></span></div>
     </div>
 
     <div class="pb-nav-row">
-      <div class="pb-nav-row-left">
-        <button class="pb-btn pb-btn-ghost" onclick="PBController.prevStep()"><i class="fas fa-arrow-left"></i> Voltar</button>
+      <div class="pb-nav-row-left"><button class="pb-btn pb-btn-ghost" onclick="PBController.prevStep()"><i class="fas fa-arrow-left"></i> Voltar</button></div>
+      <div class="pb-nav-row-right"><button class="pb-btn pb-btn-primary" onclick="PBController.nextStep()">Próximo <i class="fas fa-arrow-right"></i></button></div>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 5 — TÉCNICO (NOVO) ═══ -->
+  <div id="pb-step-5" class="pb-step-panel">
+    <div class="pb-card accent-border">
+      <div class="pb-section-title"><i class="fas fa-camera"></i> Nível Técnico &amp; Identity Lock</div>
+      <p class="pb-section-desc">Configurações técnicas de câmera, realismo e proteções de identidade da modelo.</p>
+
+      <!-- REALISMO -->
+      <div class="pb-field">
+        <div class="pb-field-header">
+          <span class="pb-field-label">Nível de Realismo <span class="req">*</span></span>
+          <span class="pb-counter" id="pb-count-realismo">0 / 1</span>
+        </div>
+        <div class="pb-chips" id="pb-chips-realismo">
+          <div class="pb-chip" data-field="realismo" data-max="1" data-value="Hyperrealistic — maximum photographic detail, authentic skin texture (visible pores, natural micro-imperfections, no smoothing), ultra-high resolution, output indistinguishable from a real professional photograph" onclick="PBState.toggle(this)">Hiper-realista (máximo)</div>
+          <div class="pb-chip active" data-field="realismo" data-max="1" data-value="Professional photorealistic — DSLR quality, cinematic lighting, authentic textures, zero AI painting aesthetic" onclick="PBState.toggle(this)">Fotorrealista profissional</div>
+          <div class="pb-chip" data-field="realismo" data-max="1" data-value="Realistic with light editorial post-production — soft contrast, balanced color grading" onclick="PBState.toggle(this)">Realista + editorial</div>
+        </div>
+        <div class="pb-limit-msg" id="pb-limit-realismo">⚠️ Apenas 1 seleção permitida.</div>
       </div>
+
+      <!-- LENTE / SETUP TÉCNICO (NOVO) -->
+      <div class="pb-field">
+        <div class="pb-field-label" style="margin-bottom:12px;"><i class="fas fa-camera-retro" style="margin-right:6px;"></i> Setup Técnico de Câmera</div>
+        <div class="pb-tech-row">
+          <div>
+            <div class="pb-tech-label">🔭 Lente / Focal</div>
+            <select class="pb-tech-select" id="pb-select-lente">
+              <option value="85mm f/1.8 lens simulation">85mm f/1.8 (retrato padrão)</option>
+              <option value="50mm f/1.4 lens simulation">50mm f/1.4 (natural)</option>
+              <option value="105mm f/2.8 macro lens simulation">105mm f/2.8 (beauty/macro)</option>
+              <option value="35mm f/1.4 lens simulation">35mm f/1.4 (ambiental)</option>
+              <option value="70-200mm f/2.8 telephoto lens simulation">70-200mm f/2.8 (compressão)</option>
+            </select>
+          </div>
+          <div>
+            <div class="pb-tech-label">💡 Setup de Luz</div>
+            <select class="pb-tech-select" id="pb-select-luzetup">
+              <option value="Rembrandt lighting — primary soft light from upper-left, subtle fill light on shadow side, slight hair light. Warm-neutral color temperature 5000–5500K">Rembrandt (superior-esq)</option>
+              <option value="butterfly lighting — overhead soft light, symmetrical shadows below nose">Butterfly (overhead)</option>
+              <option value="loop lighting — main light at 45° angle with soft fill">Loop 45° (versátil)</option>
+              <option value="split lighting — hard division between light and shadow">Split (dramático)</option>
+              <option value="broad natural window light from the side, soft and even">Luz janela lateral</option>
+              <option value="three-point studio lighting — key, fill and hair light">Três pontos (estúdio)</option>
+            </select>
+          </div>
+          <div>
+            <div class="pb-tech-label">🌡️ Temperatura de Cor</div>
+            <select class="pb-tech-select" id="pb-select-colortemp">
+              <option value="warm-neutral color temperature 5000–5500K">5000–5500K (neutro-quente)</option>
+              <option value="daylight balanced 6500K">6500K (luz do dia)</option>
+              <option value="warm tungsten 3200K for golden tones">3200K (tungstênio quente)</option>
+              <option value="cool crisp 7000K daylight">7000K (frio/clean)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- IDENTITY LOCK (NOVO) -->
+      <div class="pb-identity-lock">
+        <div class="pb-identity-lock-title"><i class="fas fa-lock"></i> Identity Lock — Proteções Automáticas</div>
+        <p style="font-size:12px;color:#6ee7b7;margin-bottom:12px;">Marque o que deve ser protegido. O bloco IDENTITY LOCK será incluído no início do prompt (prioridade máxima para a IA).</p>
+        <div class="pb-identity-lock-grid" id="pb-lock-grid">
+          <label class="pb-lock-chip"><input type="checkbox" id="lock-face" checked> Rosto, traços e formato</label>
+          <label class="pb-lock-chip"><input type="checkbox" id="lock-hair" checked> Cabelo (corte, cor, textura)</label>
+          <label class="pb-lock-chip"><input type="checkbox" id="lock-skin" checked> Tom e textura de pele</label>
+          <label class="pb-lock-chip"><input type="checkbox" id="lock-proportions" checked> Proporções corporais</label>
+          <label class="pb-lock-chip"><input type="checkbox" id="lock-smile" checked> Sorriso e expressão base</label>
+          <label class="pb-lock-chip"><input type="checkbox" id="lock-eyes" checked> Cor e forma dos olhos</label>
+        </div>
+      </div>
+
+      <!-- RESTRIÇÕES PREVIEW -->
+      <div class="pb-restrictions-preview">
+        <div class="pb-restrictions-preview-title"><i class="fas fa-shield-halved"></i> Restrições incluídas no prompt</div>
+        <span class="pb-restriction-tag">❌ Do NOT alter hair</span>
+        <span class="pb-restriction-tag">❌ No skin smoothing/blur</span>
+        <span class="pb-restriction-tag">❌ No plastic skin effect</span>
+        <span class="pb-restriction-tag">❌ No body distortion</span>
+        <span class="pb-restriction-tag">❌ No AI painting aesthetic</span>
+        <span class="pb-restriction-tag">✅ Authentic skin texture</span>
+        <span class="pb-restriction-tag">✅ Realistic fabric physics</span>
+        <span class="pb-restriction-tag">✅ Natural proportions</span>
+      </div>
+
+      <div class="pb-error-msg" id="pb-err-5"><i class="fas fa-exclamation-circle"></i> <span id="pb-err-5-text"></span></div>
+    </div>
+
+    <div class="pb-nav-row">
+      <div class="pb-nav-row-left"><button class="pb-btn pb-btn-ghost" onclick="PBController.prevStep()"><i class="fas fa-arrow-left"></i> Voltar</button></div>
       <div class="pb-nav-row-right">
         <button class="pb-btn pb-btn-primary" onclick="PBController.generateAndPreview()">
           <i class="fas fa-wand-sparkles"></i> Gerar Preview
@@ -1054,10 +809,8 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════
-       STEP 5 — PREVIEW & EXPORT
-  ═══════════════════════════════════════ -->
-  <div id="pb-step-5" class="pb-step-panel">
+  <!-- ═══ STEP 6 — PREVIEW & EXPORT ═══ -->
+  <div id="pb-step-6" class="pb-step-panel">
     <div class="pb-card accent-border">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
         <div class="pb-section-title" style="margin-bottom:0;">
@@ -1073,80 +826,56 @@
           </button>
         </div>
       </div>
-
-      <!-- Prompt output area -->
       <div id="pb-prompts-output">
         <div class="pb-preview-empty">
           <i class="fas fa-wand-sparkles"></i>
           Nenhum prompt gerado ainda. Preencha os campos e clique em <strong style="color:var(--pb-accent);">Gerar Preview</strong>.
         </div>
       </div>
-
       <div class="pb-copy-flash" id="pb-copy-flash"><i class="fas fa-check-circle"></i> Todos os prompts copiados!</div>
     </div>
 
     <div class="pb-nav-row">
       <div class="pb-nav-row-left">
         <button class="pb-btn pb-btn-ghost" onclick="PBController.prevStep()"><i class="fas fa-arrow-left"></i> Editar</button>
-        <button class="pb-btn pb-btn-ghost pb-btn-sm" onclick="PBController.resetAll()">
-          <i class="fas fa-rotate-left"></i> Novo Prompt
-        </button>
+        <button class="pb-btn pb-btn-ghost pb-btn-sm" onclick="PBController.resetAll()"><i class="fas fa-rotate-left"></i> Novo Prompt</button>
       </div>
       <div class="pb-nav-row-right">
-        <button class="pb-btn pb-btn-primary" onclick="PBController.generateAndPreview()">
-          <i class="fas fa-refresh"></i> Rege​rar
-        </button>
+        <button class="pb-btn pb-btn-primary" onclick="PBController.generateAndPreview()"><i class="fas fa-refresh"></i> Regerar</button>
       </div>
     </div>
   </div>
 
 </div><!-- /pb-root -->
 
-<!-- ══════════════════════════════════════
-     TEMPLATES PANEL (slide-in card)
-══════════════════════════════════════ -->
-<div id="pb-templates-panel" style="display:none;max-width:820px;margin:16px auto 0;">
+<!-- TEMPLATES PANEL -->
+<div id="pb-templates-panel" style="display:none;max-width:860px;margin:16px auto 0;">
   <div class="pb-card accent-border">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
       <div class="pb-section-title" style="margin-bottom:0;"><i class="fas fa-bookmark"></i> Templates Salvos</div>
-      <button class="pb-btn pb-btn-ghost pb-btn-sm" onclick="PBController.closeTemplates()">
-        <i class="fas fa-times"></i> Fechar
-      </button>
+      <button class="pb-btn pb-btn-ghost pb-btn-sm" onclick="PBController.closeTemplates()"><i class="fas fa-times"></i> Fechar</button>
     </div>
     <div id="pb-templates-list"></div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     SAVE TEMPLATE MODAL
-══════════════════════════════════════ -->
+<!-- SAVE MODAL -->
 <div class="pb-modal-overlay" id="pb-save-modal">
   <div class="pb-modal-box">
     <h3><i class="fas fa-bookmark"></i> Salvar como Template</h3>
-    <input type="text" class="pb-modal-input" id="pb-template-name" placeholder="Ex: Ensaio Clínica — Look Branco…" maxlength="60">
+    <input type="text" class="pb-modal-input" id="pb-template-name" placeholder="Ex: Psicóloga — Consultório Silk…" maxlength="60">
     <div class="pb-modal-actions">
       <button class="pb-btn pb-btn-ghost pb-btn-sm" onclick="PBController.closeSaveModal()">Cancelar</button>
-      <button class="pb-btn pb-btn-primary pb-btn-sm" onclick="PBController.saveTemplate()">
-        <i class="fas fa-bookmark"></i> Salvar
-      </button>
+      <button class="pb-btn pb-btn-primary pb-btn-sm" onclick="PBController.saveTemplate()"><i class="fas fa-bookmark"></i> Salvar</button>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════
-     JAVASCRIPT — IA PROJECT PROMPT BUILDER
-     Architecture:
-       PBData     — static config / labels
-       PBState    — chip selection state + localStorage
-       PBService  — prompt generation logic
-       PBUI       — DOM rendering helpers
-       PBController — wizard navigation + wiring
-══════════════════════════════════════════════════════════════ -->
 <script>
 'use strict';
 
 /* ══════════════════════════════════════════════
-   PBData — Static configuration
+   PBData
 ══════════════════════════════════════════════ */
 const PBData = {
   STEPS: [
@@ -1154,7 +883,8 @@ const PBData = {
     { id: 2, label: 'Visual' },
     { id: 3, label: 'Cenário' },
     { id: 4, label: 'Pose & Técnica' },
-    { id: 5, label: 'Preview' },
+    { id: 5, label: 'Técnico' },
+    { id: 6, label: 'Preview' },
   ],
 
   REQUIRED_BY_STEP: {
@@ -1168,10 +898,12 @@ const PBData = {
       { field: 'iluminacao', label: 'Tipo de Iluminação' },
     ],
     4: [
-      { field: 'pose',       label: 'Pose' },
-      { field: 'expressao',  label: 'Expressão Facial' },
-      { field: 'refvisual',  label: 'Referência Visual' },
-      { field: 'realismo',   label: 'Nível Técnico' },
+      { field: 'pose',      label: 'Pose' },
+      { field: 'expressao', label: 'Expressão Facial' },
+      { field: 'refvisual', label: 'Referência Visual' },
+    ],
+    5: [
+      { field: 'realismo', label: 'Nível Técnico' },
     ],
   },
 
@@ -1181,19 +913,171 @@ const PBData = {
     pose: 3,      expressao: 2, refvisual: 2, realismo: 1,
   },
 
-  LS_TEMPLATES_KEY: 'pb_templates_v2',
-  LS_STATE_KEY:     'pb_state_v2',
+  LS_TEMPLATES_KEY: 'pb_templates_v3',
+  LS_STATE_KEY:     'pb_state_v3',
+
+  PRESETS: {
+    psicologa: {
+      profissao: ['licensed psychologist / therapist'],
+      look: ['silk coordinate set (blouse + wide-leg trousers) in soft neutral tone (ivory, blush or dusty sage), with a lightly structured blazer loosely draped open. Fabric shows realistic silk sheen, natural drape and subtle wrinkles'],
+      cabelo: ['voluminous defined waves with natural bounce — Bob cut with soft layering, realistic volume and authentic texture, no plastic effect'],
+      ambiente: ['warm welcoming psychology office — comfortable armchair, potted plants (monstera or ficus), modern ceramic vases, warm-toned walls and soft natural side window light'],
+      detalhes: ['natural plants and flowers as décor elements', 'diagonal sunlight through windows casting soft shadows', 'shallow depth of field — background slightly out of focus'],
+      iluminacao: ['MIXED — interior with soft natural window light'],
+      pose: ['seated in armchair, body slightly leaned forward in empathetic listening posture, shoulders relaxed, hands gently resting on lap'],
+      expressao: ['warm natural smile — not exaggerated, eyes soft and expressive, conveying approachability and confidence'],
+      refvisual: ['Artistic portrait — 85mm f/1.8 lens, Rembrandt lighting, textured background, shallow depth of field'],
+      realismo: ['Hyperrealistic — maximum photographic detail, authentic skin texture (visible pores, natural micro-imperfections, no smoothing), ultra-high resolution, output indistinguishable from a real professional photograph'],
+      lente: '85mm f/1.8 lens simulation',
+      luzetup: 'Rembrandt lighting — primary soft light from upper-left, subtle fill light on shadow side, slight hair light. Warm-neutral color temperature 5000–5500K',
+      colortemp: 'warm-neutral color temperature 5000–5500K',
+    },
+    coach: {
+      profissao: ['business coach / mentor'],
+      look: ['structured blazer with wide-leg trousers and blouse'],
+      cabelo: ['straight hair with intense shine'],
+      ambiente: ['modern contemporary office with clean design'],
+      detalhes: ['organized work desk with laptop', 'clean out-of-focus background (soft bokeh)', 'contemporary architecture with clean lines'],
+      iluminacao: ['INTERIOR with controlled artificial lighting'],
+      pose: ['standing upright, confident posture, direct eye contact with camera'],
+      expressao: ['authoritative expression, direct and determined gaze'],
+      refvisual: ['Personal branding photography — clean composition, soft natural light'],
+      realismo: ['Professional photorealistic — DSLR quality, cinematic lighting, authentic textures, zero AI painting aesthetic'],
+      lente: '85mm f/1.8 lens simulation',
+      luzetup: 'loop lighting — main light at 45° angle with soft fill',
+      colortemp: '5000–5500K (neutro-quente)',
+    },
+    advogada: {
+      profissao: ['attorney / legal professional'],
+      look: ['full feminine suit in dark or charcoal tone'],
+      cabelo: ['elegant updo bun, sleek and polished'],
+      ambiente: ['library or reading room with bookshelves in background'],
+      detalhes: ['books and decorative objects in background', 'clean out-of-focus background (soft bokeh)', 'subtle professional props in background'],
+      iluminacao: ['INTERIOR with controlled artificial lighting'],
+      pose: ['standing upright, confident posture, direct eye contact with camera'],
+      expressao: ['authoritative expression, direct and determined gaze'],
+      refvisual: ['Premium corporate portrait — studio lighting, neutral background'],
+      realismo: ['Professional photorealistic — DSLR quality, cinematic lighting, authentic textures, zero AI painting aesthetic'],
+      lente: '85mm f/1.8 lens simulation',
+      luzetup: 'three-point studio lighting — key, fill and hair light',
+      colortemp: '5000–5500K (neutro-quente)',
+    },
+    medica: {
+      profissao: ['physician / medical professional'],
+      look: ['classic white lab coat over social attire'],
+      cabelo: ['straight natural hair, smooth and glossy'],
+      ambiente: ['clean modern clinic or medical office'],
+      detalhes: ['subtle professional props in background', 'clean out-of-focus background (soft bokeh)', 'contemporary architecture with clean lines'],
+      iluminacao: ['INTERIOR with controlled artificial lighting'],
+      pose: ['standing upright, confident posture, direct eye contact with camera'],
+      expressao: ['serene, confident and professional expression'],
+      refvisual: ['Premium corporate portrait — studio lighting, neutral background'],
+      realismo: ['Hyperrealistic — maximum photographic detail, authentic skin texture (visible pores, natural micro-imperfections, no smoothing), ultra-high resolution, output indistinguishable from a real professional photograph'],
+      lente: '85mm f/1.8 lens simulation',
+      luzetup: 'butterfly lighting — overhead soft light, symmetrical shadows below nose',
+      colortemp: '6500K (luz do dia)',
+    },
+    nutricionista: {
+      profissao: ['nutritionist / dietitian'],
+      look: ['light floral midi dress with flat sandals'],
+      cabelo: ['light natural waves, effortless movement'],
+      ambiente: ['upscale café or restaurant with minimalist décor'],
+      detalhes: ['natural plants and flowers as décor elements', 'diagonal sunlight through windows casting soft shadows', 'modern ceramic vases and tasteful decorative objects'],
+      iluminacao: ['MIXED — interior with soft natural window light'],
+      pose: ['smiling while looking down naturally'],
+      expressao: ['warm natural smile — not exaggerated, eyes soft and expressive, conveying approachability and confidence'],
+      refvisual: ['Lifestyle editorial — ambient natural light, authentic feel'],
+      realismo: ['Professional photorealistic — DSLR quality, cinematic lighting, authentic textures, zero AI painting aesthetic'],
+      lente: '50mm f/1.4 lens simulation',
+      luzetup: 'broad natural window light from the side, soft and even',
+      colortemp: '6500K (luz do dia)',
+    },
+    makeup: {
+      profissao: ['makeup artist / beauty professional'],
+      look: ['ribbed crop top set with flowing midi skirt'],
+      cabelo: ['voluminous wavy hair with rich definition'],
+      ambiente: ['modern beauty salon with mirrors and professional equipment'],
+      detalhes: ['mirrors and subtle reflections in composition', 'natural plants and flowers as décor elements', 'clean out-of-focus background (soft bokeh)'],
+      iluminacao: ['INTERIOR with controlled artificial lighting'],
+      pose: ['leaning against desk, casual yet elegant stance'],
+      expressao: ['broad warm smile, vibrant and positive energy'],
+      refvisual: ['Beauty glam photography — 105mm macro lens, luminous skin'],
+      realismo: ['Hyperrealistic — maximum photographic detail, authentic skin texture (visible pores, natural micro-imperfections, no smoothing), ultra-high resolution, output indistinguishable from a real professional photograph'],
+      lente: '105mm f/2.8 macro lens simulation',
+      luzetup: 'butterfly lighting — overhead soft light, symmetrical shadows below nose',
+      colortemp: '5000–5500K (neutro-quente)',
+    },
+    hairstylist: {
+      profissao: ['hair stylist / hairdresser'],
+      look: ['branded polo shirt with coordinated solid trousers'],
+      cabelo: ['defined curly hair with full volume'],
+      ambiente: ['modern beauty salon with mirrors and professional equipment'],
+      detalhes: ['mirrors and subtle reflections in composition', 'subtle professional props in background', 'clean out-of-focus background (soft bokeh)'],
+      iluminacao: ['INTERIOR with controlled artificial lighting'],
+      pose: ['standing upright, confident posture, direct eye contact with camera'],
+      expressao: ['broad warm smile, vibrant and positive energy'],
+      refvisual: ['Personal branding photography — clean composition, soft natural light'],
+      realismo: ['Professional photorealistic — DSLR quality, cinematic lighting, authentic textures, zero AI painting aesthetic'],
+      lente: '85mm f/1.8 lens simulation',
+      luzetup: 'loop lighting — main light at 45° angle with soft fill',
+      colortemp: '6500K (luz do dia)',
+    },
+    empreendedora: {
+      profissao: ['entrepreneur / business owner'],
+      look: ['silk coordinate set (blouse + wide-leg trousers) in soft neutral tone (ivory, blush or dusty sage), with a lightly structured blazer loosely draped open. Fabric shows realistic silk sheen, natural drape and subtle wrinkles'],
+      cabelo: ['straight hair with intense shine'],
+      ambiente: ['elegant living room with sophisticated décor'],
+      detalhes: ['books and decorative objects in background', 'modern ceramic vases and tasteful decorative objects', 'diagonal sunlight through windows casting soft shadows'],
+      iluminacao: ['MIXED — interior with soft natural window light'],
+      pose: ['seated in executive chair, relaxed and professional'],
+      expressao: ['serene, confident and professional expression'],
+      refvisual: ['Editorial Vogue style — soft golden light, dark textured background'],
+      realismo: ['Hyperrealistic — maximum photographic detail, authentic skin texture (visible pores, natural micro-imperfections, no smoothing), ultra-high resolution, output indistinguishable from a real professional photograph'],
+      lente: '85mm f/1.8 lens simulation',
+      luzetup: 'Rembrandt lighting — primary soft light from upper-left, subtle fill light on shadow side, slight hair light. Warm-neutral color temperature 5000–5500K',
+      colortemp: 'warm-neutral color temperature 5000–5500K',
+    },
+    lifestyle: {
+      profissao: ['content creator / influencer'],
+      look: ['light floral midi dress with flat sandals'],
+      cabelo: ['half-up style with loose face-framing strands'],
+      ambiente: ['garden with flowers and lush natural vegetation'],
+      detalhes: ['natural plants and flowers as décor elements', 'natural elements: branches and tropical foliage', 'diagonal sunlight through windows casting soft shadows'],
+      iluminacao: ['EXTERIOR with natural ambient light'],
+      pose: ['walking with light natural movement, dynamic energy'],
+      expressao: ['broad warm smile, vibrant and positive energy'],
+      refvisual: ['Lifestyle editorial — ambient natural light, authentic feel'],
+      realismo: ['Professional photorealistic — DSLR quality, cinematic lighting, authentic textures, zero AI painting aesthetic'],
+      lente: '50mm f/1.4 lens simulation',
+      luzetup: 'broad natural window light from the side, soft and even',
+      colortemp: '6500K (luz do dia)',
+    },
+    editorial: {
+      profissao: [],
+      look: ['structured dress with statement neckline in a vibrant hue'],
+      cabelo: ['voluminous wavy hair with rich definition'],
+      ambiente: ['urban balcony with city view and golden hour light'],
+      detalhes: ['contemporary architecture with clean lines', 'mirrors and subtle reflections in composition', 'clean out-of-focus background (soft bokeh)'],
+      iluminacao: ['GOLDEN HOUR — warm directional sunset light'],
+      pose: ['editorial pose with creative camera angle and bold composition'],
+      expressao: ['intense editorial expression, striking and memorable gaze'],
+      refvisual: ['Editorial Vogue style — soft golden light, dark textured background'],
+      realismo: ['Hyperrealistic — maximum photographic detail, authentic skin texture (visible pores, natural micro-imperfections, no smoothing), ultra-high resolution, output indistinguishable from a real professional photograph'],
+      lente: '70-200mm f/2.8 telephoto lens simulation',
+      luzetup: 'split lighting — hard division between light and shadow',
+      colortemp: 'warm tungsten 3200K for golden tones',
+    },
+  }
 };
 
 /* ══════════════════════════════════════════════
-   PBState — Selection state management
+   PBState
 ══════════════════════════════════════════════ */
 const PBState = (() => {
-  const _state = {};     // field -> Set<string>
-  const _custom = {};    // field -> string (custom text input)
+  const _state = {};
+  const _custom = {};
 
   function _getMax(field, chipEl) {
-    // Check data-max on chip first, then fallback to PBData config
     if (chipEl && chipEl.dataset.max) return parseInt(chipEl.dataset.max, 10);
     return PBData.MAX_BY_FIELD[field] || 3;
   }
@@ -1249,21 +1133,30 @@ const PBState = (() => {
 
   function get(field) {
     const vals = _state[field] ? [..._state[field]] : [];
-    const cv   = (_custom[field] || '').trim();
+    const cv = (_custom[field] || '').trim();
     if (cv) vals.push(cv);
     return vals;
   }
 
-  function getFirst(field) {
-    return get(field)[0] || null;
+  function getFirst(field) { return get(field)[0] || null; }
+
+  function setField(field, values) {
+    if (!_state[field]) _state[field] = new Set();
+    _state[field].clear();
+    document.querySelectorAll(`[data-field="${field}"].pb-chip`).forEach(c => c.classList.remove('active'));
+    values.forEach(v => {
+      _state[field].add(v);
+      const chipEl = document.querySelector(`[data-field="${field}"][data-value="${CSS.escape(v)}"]`);
+      if (chipEl) chipEl.classList.add('active');
+    });
+    _updateCounter(field);
+    _updateBlocked(field);
   }
 
   function reset() {
     Object.keys(_state).forEach(k => _state[k].clear());
     Object.keys(_custom).forEach(k => { _custom[k] = ''; });
-    // Re-sync DOM chips
     document.querySelectorAll('.pb-chip.active').forEach(c => c.classList.remove('active'));
-    // Reset defaults
     _applyDefaults();
     Object.keys(PBData.MAX_BY_FIELD).forEach(field => {
       _updateCounter(field);
@@ -1273,12 +1166,18 @@ const PBState = (() => {
   }
 
   function _applyDefaults() {
-    // Default: realismo chip
-    const defaultRealismo = document.querySelector('[data-field="realismo"][data-value="Fotorrealista profissional (qualidade DSLR, iluminação cinematográfica)"]');
-    if (defaultRealismo) { defaultRealismo.classList.add('active'); if (!_state['realismo']) _state['realismo'] = new Set(); _state['realismo'].add(defaultRealismo.dataset.value); }
-    // Default: iluminacao
-    const defaultIlum = document.querySelector('[data-field="iluminacao"][data-value="AMBIENTE INTERNO com iluminação artificial controlada"]');
-    if (defaultIlum) { defaultIlum.classList.add('active'); if (!_state['iluminacao']) _state['iluminacao'] = new Set(); _state['iluminacao'].add(defaultIlum.dataset.value); }
+    const defaultRealismo = document.querySelector('[data-field="realismo"][data-value="Professional photorealistic — DSLR quality, cinematic lighting, authentic textures, zero AI painting aesthetic"]');
+    if (defaultRealismo) {
+      defaultRealismo.classList.add('active');
+      if (!_state['realismo']) _state['realismo'] = new Set();
+      _state['realismo'].add(defaultRealismo.dataset.value);
+    }
+    const defaultIlum = document.querySelector('[data-field="iluminacao"][data-value="INTERIOR with controlled artificial lighting"]');
+    if (defaultIlum) {
+      defaultIlum.classList.add('active');
+      if (!_state['iluminacao']) _state['iluminacao'] = new Set();
+      _state['iluminacao'].add(defaultIlum.dataset.value);
+    }
   }
 
   function _save() {
@@ -1316,41 +1215,108 @@ const PBState = (() => {
     } catch(e) { _applyDefaults(); }
   }
 
-  return { toggle, updateCustom, get, getFirst, reset, restore };
+  return { toggle, updateCustom, get, getFirst, setField, reset, restore };
 })();
 
 /* ══════════════════════════════════════════════
-   PBService — Prompt generation logic
+   PBService — Prompt generation
 ══════════════════════════════════════════════ */
 const PBService = (() => {
   let _refreshTimer = null;
 
-  function _buildHairBlock(cabeloVals) {
-    const cabelo = cabeloVals[0] || '';
-    if (!cabelo) return '';
-    return `\n**Cabelo:** ${cabelo}, com movimento natural, volume realista e textura autêntica, sem efeito plástico ou artificial. Luz suave destacando os fios, mantendo aparência realista e natural.`;
+  function _getLang() {
+    const checked = document.querySelector('input[name="pb-lang"]:checked');
+    return checked ? checked.value : 'en';
+  }
+
+  function _getLockBlock() {
+    const locks = {
+      face:        document.getElementById('lock-face')?.checked,
+      hair:        document.getElementById('lock-hair')?.checked,
+      skin:        document.getElementById('lock-skin')?.checked,
+      proportions: document.getElementById('lock-proportions')?.checked,
+      smile:       document.getElementById('lock-smile')?.checked,
+      eyes:        document.getElementById('lock-eyes')?.checked,
+    };
+    const lines = [];
+    if (locks.face)        lines.push('- Face shape, nose, lips, jaw → identical to reference');
+    if (locks.hair)        lines.push('- Hair: preserve original cut, wave pattern, color, volume and texture exactly as in reference photo — zero alteration');
+    if (locks.skin)        lines.push('- Skin tone, undertone and natural skin texture (pores, subtle imperfections) → identical to reference');
+    if (locks.proportions) lines.push('- Body proportions → identical to reference');
+    if (locks.smile)       lines.push('- Smile shape and base expression → identical to reference');
+    if (locks.eyes)        lines.push('- Eye color and shape → identical to reference');
+    if (!lines.length) return '';
+    return `IDENTITY LOCK — DO NOT MODIFY:\n${lines.join('\n')}`;
+  }
+
+  function _getTechBlock() {
+    const lente     = document.getElementById('pb-select-lente')?.value     || '85mm f/1.8 lens simulation';
+    const luzetup   = document.getElementById('pb-select-luzetup')?.value   || 'Rembrandt lighting';
+    const colortemp = document.getElementById('pb-select-colortemp')?.value || 'warm-neutral 5000–5500K';
+    return `Shot style: Professional DSLR portrait, ${lente}. ${luzetup}. ${colortemp}. No harsh shadows. Natural skin highlights without overexposure.`;
+  }
+
+  function _buildPromptEN(data) {
+    const { look, cabelo, ambiente, detalhes, pose, expressao, refvisual, realismo, profissao, iluminacao } = data;
+    const identityBlock = _getLockBlock();
+    const techBlock     = _getTechBlock();
+    const profLine      = profissao ? `Professional context: ${profissao}.` : '';
+
+    return `Photograph-based image edit of the attached reference model. Preserve exact facial features, skin tone, body proportions and likeness with maximum fidelity to the original photo.
+
+${identityBlock}
+
+${profLine ? profLine + '\n\n' : ''}WARDROBE:
+${look}. Fabric must show physically accurate texture, natural drape and realistic behavior — no plastic or CGI appearance.
+
+HAIR:
+${cabelo}, with natural movement, realistic volume and authentic texture. Soft light highlighting the strands, maintaining realistic and natural appearance.
+
+SETTING:
+${ambiente}. Background elements: ${detalhes}. Shallow depth of field — background slightly out of focus to isolate subject.
+
+LIGHTING:
+${iluminacao}. ${techBlock}
+
+POSE & EXPRESSION:
+${pose}. ${expressao}. Posture conveys confidence and approachability.
+
+VISUAL REFERENCE:
+${refvisual}.
+
+TECHNICAL SPECS:
+${realismo}. Ultra-detailed, natural textures, cinematic lighting, DSLR photo style.
+
+STRICT RESTRICTIONS:
+❌ Do NOT alter hair in any way
+❌ Do NOT modify facial features, smile or expression
+❌ Do NOT apply skin smoothing, blur or plastic effect
+❌ Do NOT change body proportions
+❌ Do NOT add digital painting or illustration aesthetic
+✅ Maintain photorealistic integrity throughout
+✅ Output must be indistinguishable from a real professional photograph`;
+  }
+
+  function _buildPromptPT(data) {
+    const { look, cabelo, ambiente, detalhes, pose, expressao, refvisual, realismo, profissao, iluminacao } = data;
+    const profLine = profissao ? `\n**Contexto profissional:** ${profissao}` : '';
+
+    return `Edite a foto de referência da modelo em anexo para recriar uma foto realista, com o rosto, traços físicos e corporais o mais fiel possível da foto em anexo.
+- Alta definição, realismo fotográfico extremo, textura de pele autêntica, sem efeito plástico ou suavização exagerada.
+- Ajuste iluminação, cenário e roupas para parecer ensaio profissional, respeitando proporções naturais da modelo.
+${profLine}
+**Look completo:** ${look}
+**Cabelo:** ${cabelo}, com movimento natural, volume realista e textura autêntica, sem efeito plástico ou artificial.
+**Iluminação:** ${iluminacao}
+**Ambiente / cenário:** ${ambiente}, com ${detalhes} e iluminação natural, mantendo realismo e coerência com o tema.
+**Pose e expressão:** ${pose}, com ${expressao}, condizente com o contexto do ensaio.
+**Referência visual:** ${refvisual}
+**Nível técnico:** ${realismo}, ultra detalhado, texturas naturais, iluminação cinematográfica, estilo foto DSLR.
+**Restrições:** [NÃO altere o cabelo original] [NÃO altere sorriso ou traços do rosto] [NÃO suavize artificialmente a pele] [Textura real de pele e tecido] [Proporções naturais sem distorção] [Fotorrealismo extremo, sem aspecto de IA ou pintura digital]`;
   }
 
   function _buildSinglePrompt(data) {
-    const { look, cabelo, ambiente, detalhes, pose, expressao, refvisual, realismo, profissao, iluminacao } = data;
-
-    const profBloco      = profissao  ? `\n**Contexto profissional:** ${profissao}` : '';
-    const refVisualBloco = refvisual  ? `\n**Referência visual:** ${refvisual}`     : '';
-    const cabeloBloco    = _buildHairBlock([cabelo]);
-    const ilumBloco      = iluminacao || 'iluminação natural, aberta e realista';
-
-    return (
-`edite a foto de referência da modelo em anexo para recriar uma foto realista da mesma, recrie o rosto, traços físicos e corporais o mais fiel possível da foto em anexo.
-- Alta definição, realismo fotográfico extremo, textura de pele autêntica, sem efeito plástico ou suavização exagerada.
-- Ajuste iluminação, cenário e roupas para parecer ensaio profissional, respeitando proporções naturais da modelo.
-${profBloco}
-**Look completo:** ${look}${cabeloBloco}
-**Iluminação:** ${ilumBloco}
-**Ambiente / cenário:** ${ambiente}, com ${detalhes} e iluminação natural, mantendo realismo e coerência com o tema.
-**Pose e expressão:** ${pose}, com ${expressao}, condizente com o contexto do ensaio.${refVisualBloco}
-**Nível técnico:** ${realismo}, ultra detalhado, texturas naturais, iluminação cinematográfica, estilo foto DSLR.
-**Restrições:** [NÃO altere o cabelo original] [NÃO altere sorriso ou traços do rosto] [NÃO suavize artificialmente a pele] [Textura real de pele e tecido] [Proporções naturais sem distorção] [Fotorrealismo extremo, sem aspecto de IA ou pintura digital]`
-    );
+    return _getLang() === 'en' ? _buildPromptEN(data) : _buildPromptPT(data);
   }
 
   function generateAll() {
@@ -1361,7 +1327,7 @@ ${profBloco}
     const cabelo    = PBState.getFirst('cabelo') || '';
     const detalhes  = PBState.get('detalhes').join(', ');
     const refvisual = PBState.get('refvisual').join(', ');
-    const realismo  = PBState.getFirst('realismo') || 'Fotorrealista profissional';
+    const realismo  = PBState.getFirst('realismo') || 'Professional photorealistic — DSLR quality';
     const profissao = PBState.get('profissao').join(', ');
     const iluminacao= PBState.get('iluminacao').join(', ');
 
@@ -1376,8 +1342,10 @@ ${profBloco}
 
     if (!combos.length) return [];
 
+    const lang = _getLang();
     return combos.map((combo, idx) => ({
       label: combos.length > 1 ? `Combinação ${idx + 1} de ${combos.length}` : 'Prompt Gerado',
+      lang,
       text: _buildSinglePrompt(combo),
     }));
   }
@@ -1385,7 +1353,7 @@ ${profBloco}
   function schedulePreviewRefresh() {
     if (_refreshTimer) clearTimeout(_refreshTimer);
     _refreshTimer = setTimeout(() => {
-      if (document.getElementById('pb-step-5').classList.contains('active')) {
+      if (document.getElementById('pb-step-6').classList.contains('active')) {
         PBUI.renderPrompts(generateAll());
       }
     }, 400);
@@ -1401,28 +1369,27 @@ ${profBloco}
     return null;
   }
 
-  return { generateAll, schedulePreviewRefresh, validateStep };
+  return { generateAll, schedulePreviewRefresh, validateStep, getLang: _getLang };
 })();
 
 /* ══════════════════════════════════════════════
-   PBUI — DOM rendering helpers
+   PBUI
 ══════════════════════════════════════════════ */
 const PBUI = (() => {
   function renderPrompts(prompts) {
     const container = document.getElementById('pb-prompts-output');
     if (!container) return;
     if (!prompts || !prompts.length) {
-      container.innerHTML = `
-        <div class="pb-preview-empty">
-          <i class="fas fa-wand-sparkles"></i>
-          Nenhum prompt gerado ainda. Preencha os campos e clique em <strong style="color:var(--pb-accent);">Gerar Preview</strong>.
-        </div>`;
+      container.innerHTML = `<div class="pb-preview-empty"><i class="fas fa-wand-sparkles"></i>Nenhum prompt gerado ainda. Preencha os campos e clique em <strong style="color:var(--pb-accent);">Gerar Preview</strong>.</div>`;
       return;
     }
     container.innerHTML = prompts.map((p, i) => `
       <div class="pb-prompt-item">
         <div class="pb-prompt-item-header">
-          <span class="pb-prompt-item-label"><i class="fas fa-sparkles"></i> ${escHtml(p.label)}</span>
+          <span class="pb-prompt-item-label">
+            <i class="fas fa-sparkles"></i> ${escHtml(p.label)}
+            <span class="pb-prompt-lang-badge ${p.lang === 'en' ? 'en' : 'pt'}">${p.lang === 'en' ? '🇺🇸 EN' : '🇧🇷 PT'}</span>
+          </span>
           <div class="pb-prompt-item-actions">
             <button class="pb-btn pb-btn-ghost pb-btn-sm" onclick="PBController.copyPrompt(${i})" title="Copiar este prompt">
               <i class="fas fa-copy"></i> Copiar
@@ -1440,13 +1407,13 @@ const PBUI = (() => {
       el.dataset.state = state;
       const circle = el.querySelector('.pb-step-circle');
       if (state === 'done' && circle) circle.innerHTML = '<i class="fas fa-check" style="font-size:12px;"></i>';
-      else if (circle && stepId !== 5) circle.innerHTML = stepId;
+      else if (circle && stepId !== 6) circle.innerHTML = stepId;
     }
   }
 
   function updateProgress(step) {
     const bar = document.getElementById('pb-progress');
-    if (bar) bar.style.width = (step / 5 * 100) + '%';
+    if (bar) bar.style.width = (step / 6 * 100) + '%';
   }
 
   function showError(stepId, msg) {
@@ -1480,19 +1447,17 @@ const PBUI = (() => {
 })();
 
 /* ══════════════════════════════════════════════
-   PBController — Wizard navigation + templates
+   PBController
 ══════════════════════════════════════════════ */
 const PBController = (() => {
   let _current = 1;
   let _generatedPrompts = [];
 
   function goToStep(targetStep) {
-    if (targetStep < 1 || targetStep > 5) return;
-    // Hide current
+    if (targetStep < 1 || targetStep > 6) return;
     const curPanel = document.getElementById('pb-step-' + _current);
     if (curPanel) curPanel.classList.remove('active');
-    // Update stepper
-    for (let s = 1; s <= 5; s++) {
+    for (let s = 1; s <= 6; s++) {
       if (s < targetStep)        PBUI.setStepState(s, 'done');
       else if (s === targetStep) PBUI.setStepState(s, 'active');
       else                        PBUI.setStepState(s, 'idle');
@@ -1505,10 +1470,9 @@ const PBController = (() => {
   }
 
   function nextStep() {
-    // Validate current step if required
     const err = PBService.validateStep(_current);
     if (err) { PBUI.showError(_current, `Campo obrigatório: ${err}`); return; }
-    if (_current < 5) goToStep(_current + 1);
+    if (_current < 6) goToStep(_current + 1);
   }
 
   function prevStep() {
@@ -1519,8 +1483,59 @@ const PBController = (() => {
     const err = PBService.validateStep(_current);
     if (err) { PBUI.showError(_current, `Campo obrigatório: ${err}`); return; }
     _generatedPrompts = PBService.generateAll();
-    goToStep(5);
+    goToStep(6);
     PBUI.renderPrompts(_generatedPrompts);
+  }
+
+  function applyPreset(presetKey) {
+    const preset = PBData.PRESETS[presetKey];
+    if (!preset) return;
+
+    PBState.reset();
+
+    // Apply chips
+    const fields = ['profissao','look','cabelo','ambiente','detalhes','iluminacao','pose','expressao','refvisual','realismo'];
+    fields.forEach(field => {
+      if (preset[field] && preset[field].length) {
+        PBState.setField(field, preset[field]);
+      }
+    });
+
+    // Apply selects
+    if (preset.lente) {
+      const sel = document.getElementById('pb-select-lente');
+      if (sel) {
+        // Try exact match, fallback to first
+        for (let o of sel.options) {
+          if (o.value === preset.lente) { sel.value = preset.lente; break; }
+        }
+      }
+    }
+    if (preset.luzetup) {
+      const sel = document.getElementById('pb-select-luzetup');
+      if (sel) {
+        for (let o of sel.options) {
+          if (o.value === preset.luzetup) { sel.value = preset.luzetup; break; }
+        }
+      }
+    }
+    if (preset.colortemp) {
+      const sel = document.getElementById('pb-select-colortemp');
+      if (sel) {
+        for (let o of sel.options) {
+          if (o.value === preset.colortemp) { sel.value = preset.colortemp; break; }
+        }
+      }
+    }
+
+    const presetLabels = {
+      psicologa: 'Psicóloga', coach: 'Coach / Mentora', advogada: 'Advogada',
+      medica: 'Médica', nutricionista: 'Nutricionista', makeup: 'Makeup Artist',
+      hairstylist: 'Hair Stylist', empreendedora: 'CEO / Empreendedora',
+      lifestyle: 'Lifestyle / Conteúdo', editorial: 'Editorial',
+    };
+    _showSystemToast(`✅ Preset "${presetLabels[presetKey] || presetKey}" aplicado! Clique em Gerar Preview no passo 5.`, 'success');
+    goToStep(1);
   }
 
   function copyPrompt(idx) {
@@ -1561,8 +1576,6 @@ const PBController = (() => {
     closeTemplates();
   }
 
-  // ── Templates ────────────────────────────────
-
   function openSaveModal() {
     if (!_generatedPrompts.length) { _showSystemToast('Gere os prompts antes de salvar.', 'warning'); return; }
     document.getElementById('pb-template-name').value = '';
@@ -1579,10 +1592,10 @@ const PBController = (() => {
     if (!name) { _showSystemToast('Dê um nome ao template.', 'warning'); return; }
     const templates = _loadTemplates();
     const tpl = {
-      id:        Date.now(),
+      id: Date.now(),
       name,
       createdAt: new Date().toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }),
-      prompts:   _generatedPrompts,
+      prompts: _generatedPrompts,
     };
     templates.unshift(tpl);
     _persistTemplates(templates);
@@ -1602,9 +1615,7 @@ const PBController = (() => {
     }
     list.innerHTML = `<div class="pb-template-grid">` + templates.map(t => `
       <div class="pb-template-card" onclick="PBController.applyTemplate(${t.id})">
-        <button class="pb-template-delete" onclick="event.stopPropagation(); PBController.deleteTemplate(${t.id})" title="Excluir">
-          <i class="fas fa-trash"></i>
-        </button>
+        <button class="pb-template-delete" onclick="event.stopPropagation(); PBController.deleteTemplate(${t.id})" title="Excluir"><i class="fas fa-trash"></i></button>
         <div class="name">${PBUI.escHtml(t.name)}</div>
         <div class="meta">${t.prompts.length} prompt(s) · ${t.createdAt}</div>
       </div>`).join('') + '</div>';
@@ -1620,7 +1631,7 @@ const PBController = (() => {
     const tpl = templates.find(t => t.id === id);
     if (!tpl) return;
     _generatedPrompts = tpl.prompts;
-    goToStep(5);
+    goToStep(6);
     PBUI.renderPrompts(_generatedPrompts);
     closeTemplates();
     _showSystemToast(`Template "${tpl.name}" carregado! ✅`, 'success');
@@ -1630,7 +1641,7 @@ const PBController = (() => {
     if (!confirm('Excluir este template?')) return;
     const templates = _loadTemplates().filter(t => t.id !== id);
     _persistTemplates(templates);
-    loadTemplates(); // re-render
+    loadTemplates();
   }
 
   function _loadTemplates() {
@@ -1643,21 +1654,18 @@ const PBController = (() => {
     catch(e) { /* silent */ }
   }
 
-  // ── Toast — delegates to parent system if available ────
-
   function _showSystemToast(msg, type) {
     if (typeof showToast === 'function') { showToast(msg, type); return; }
-    // Standalone fallback
     const t = document.createElement('div');
     t.style.cssText = `position:fixed;bottom:24px;right:24px;background:${type==='success'?'#00cc88':type==='warning'?'#ffaa00':'#ff3366'};color:#fff;padding:12px 20px;border-radius:10px;font-weight:700;font-size:14px;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.4);animation:pb-fadein .3s ease;`;
     t.textContent = msg;
     document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3000);
+    setTimeout(() => t.remove(), 3500);
   }
 
   return {
     goToStep, nextStep, prevStep,
-    generateAndPreview,
+    generateAndPreview, applyPreset,
     copyPrompt, copyAll, resetAll,
     openSaveModal, closeSaveModal, saveTemplate,
     loadTemplates, closeTemplates,
@@ -1666,23 +1674,28 @@ const PBController = (() => {
 })();
 
 /* ══════════════════════════════════════════════
-   INIT — Restore state on load
+   INIT
 ══════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
   PBState.restore();
 
-  // Close save modal on overlay click
   document.getElementById('pb-save-modal').addEventListener('click', function(e) {
     if (e.target === this) PBController.closeSaveModal();
   });
 
-  // Enter key on template name input
   document.getElementById('pb-template-name').addEventListener('keydown', e => {
     if (e.key === 'Enter') PBController.saveTemplate();
   });
+
+  // Language toggle re-renders preview if on step 6
+  document.querySelectorAll('input[name="pb-lang"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      if (document.getElementById('pb-step-6').classList.contains('active')) {
+        PBUI.renderPrompts(PBService.generateAll());
+      }
+    });
+  });
 });
-
-
 </script>
 </body>
 </html>
