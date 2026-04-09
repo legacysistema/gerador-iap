@@ -1143,11 +1143,14 @@ const PBState = (() => {
   function setField(field, values) {
     if (!_state[field]) _state[field] = new Set();
     _state[field].clear();
+    // Deactivate all chips for this field
     document.querySelectorAll(`[data-field="${field}"].pb-chip`).forEach(c => c.classList.remove('active'));
     values.forEach(v => {
       _state[field].add(v);
-      const chipEl = document.querySelector(`[data-field="${field}"][data-value="${CSS.escape(v)}"]`);
-      if (chipEl) chipEl.classList.add('active');
+      // Safe lookup: iterate all chips and match by dataset.value (avoids CSS.escape issues with special chars)
+      document.querySelectorAll(`[data-field="${field}"].pb-chip`).forEach(c => {
+        if (c.dataset.value === v) c.classList.add('active');
+      });
     });
     _updateCounter(field);
     _updateBlocked(field);
@@ -1199,8 +1202,7 @@ const PBState = (() => {
         if (!_state[field]) _state[field] = new Set();
         vals.forEach(v => {
           _state[field].add(v);
-          const chipEl = document.querySelector(`[data-field="${field}"][data-value="${CSS.escape(v)}"]`);
-          if (chipEl) chipEl.classList.add('active');
+          document.querySelectorAll(`[data-field="${field}"].pb-chip`).forEach(c => { if (c.dataset.value === v) c.classList.add('active'); });
         });
       });
       Object.entries(custom).forEach(([field, val]) => {
@@ -1534,8 +1536,16 @@ const PBController = (() => {
       hairstylist: 'Hair Stylist', empreendedora: 'CEO / Empreendedora',
       lifestyle: 'Lifestyle / Conteúdo', editorial: 'Editorial',
     };
-    _showSystemToast(`✅ Preset "${presetLabels[presetKey] || presetKey}" aplicado! Clique em Gerar Preview no passo 5.`, 'success');
-    goToStep(1);
+    const label = presetLabels[presetKey] || presetKey;
+    _generatedPrompts = PBService.generateAll();
+    if (_generatedPrompts.length) {
+      goToStep(6);
+      PBUI.renderPrompts(_generatedPrompts);
+      _showSystemToast('✅ Preset "' + label + '" aplicado — prompt gerado! ✨', 'success');
+    } else {
+      goToStep(1);
+      _showSystemToast('✅ Preset "' + label + '" aplicado! Clique em Gerar Preview no passo 5.', 'success');
+    }
   }
 
   function copyPrompt(idx) {
